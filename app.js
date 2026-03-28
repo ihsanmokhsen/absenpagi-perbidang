@@ -57,6 +57,7 @@ function bindEvents() {
   });
   elements.exportMonthlyExcelBtn.addEventListener("click", exportMonthlyRecapExcel);
   elements.exportMonthlyPdfBtn.addEventListener("click", exportMonthlyRecapPdf);
+  elements.attendanceContainer.addEventListener("click", handleAttendanceContainerClick);
 
   document.querySelectorAll("[data-close-modal]").forEach((button) => {
     button.addEventListener("click", () => closeModal(button.dataset.closeModal));
@@ -241,7 +242,7 @@ function renderSummary() {
   elements.summaryCards.innerHTML = cards
     .map(
       (card) => `
-        <article class="summary-card ${card.className || ""}">
+        <article class="summary-card ${card.className || ""}" data-summary-key="${card.key}">
           <p class="label">${card.label}</p>
           <div class="value">${summary[card.key]}</div>
         </article>
@@ -267,10 +268,6 @@ function renderAttendanceList() {
   elements.attendanceContainer.innerHTML = Object.entries(grouped)
     .map(([bidang, employees]) => renderBidangGroup(bidang, employees, dateAttendance))
     .join("");
-
-  elements.attendanceContainer.querySelectorAll(".status-pill").forEach((button) => {
-    button.addEventListener("click", handleStatusChange);
-  });
 }
 
 function renderBidangGroup(bidang, employees, dateAttendance) {
@@ -278,13 +275,13 @@ function renderBidangGroup(bidang, employees, dateAttendance) {
   const pppk = employees.filter((employee) => getEmployeeType(employee) === "PPPK");
 
   return `
-    <section class="group-card">
+    <section class="group-card" data-bidang="${bidang}">
       <div class="group-header">
         <div>
           <h4>${bidang}</h4>
           <p class="group-meta">${employees.length} pegawai</p>
         </div>
-        <span class="tag">${buildBidangQuickSummary(employees, dateAttendance)}</span>
+        <span class="tag" data-group-summary>${buildBidangQuickSummary(employees, dateAttendance)}</span>
       </div>
 
       <div class="group-body">
@@ -316,7 +313,7 @@ function renderEmployeeSection(title, employees, dateAttendance) {
             const status = dateAttendance[employee.id] || "hadir";
 
             return `
-              <div class="employee-row ${readOnly ? "readonly" : ""}">
+              <div class="employee-row ${readOnly ? "readonly" : ""}" data-employee-id="${employee.id}">
                 <div>
                   <div class="employee-name">${getEmployeeDisplayName(employee)}</div>
                   <div class="employee-meta">${employee.id} • ${employee.bidang}</div>
@@ -365,7 +362,50 @@ function handleStatusChange(event) {
   persistAttendanceStatus(state.activeDate, employeeId, status);
 
   renderSummary();
-  renderAttendanceList();
+  updateEmployeeRowStatus(employeeId, status);
+}
+
+function handleAttendanceContainerClick(event) {
+  const button = event.target.closest(".status-pill");
+
+  if (!button || !elements.attendanceContainer.contains(button)) {
+    return;
+  }
+
+  handleStatusChange({ currentTarget: button });
+}
+
+function updateEmployeeRowStatus(employeeId, status) {
+  const row = elements.attendanceContainer.querySelector(`[data-employee-id="${employeeId}"]`);
+
+  if (!row) {
+    renderAttendanceList();
+    return;
+  }
+
+  row.querySelectorAll(".status-pill").forEach((button) => {
+    button.classList.toggle("active", button.dataset.status === status);
+  });
+
+  updateGroupSummaryForRow(row);
+}
+
+function updateGroupSummaryForRow(row) {
+  const groupCard = row.closest("[data-bidang]");
+
+  if (!groupCard) {
+    return;
+  }
+
+  const bidang = groupCard.dataset.bidang;
+  const summaryTag = groupCard.querySelector("[data-group-summary]");
+  const bidangEmployees = getEmployeeDirectory()[bidang] || [];
+
+  if (!summaryTag || !bidangEmployees.length) {
+    return;
+  }
+
+  summaryTag.textContent = buildBidangQuickSummary(bidangEmployees, getAttendanceForDate(state.activeDate));
 }
 
 function renderMonitoringInsights() {
