@@ -198,6 +198,7 @@ const state = {
   currentReport: null,
   selectedMonitoringBidang: null,
   employeeDirectory: EMPLOYEES,
+  attendanceSyncTimers: {},
 };
 
 const elements = {

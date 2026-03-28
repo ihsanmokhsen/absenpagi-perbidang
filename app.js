@@ -33,12 +33,7 @@ function bindEvents() {
     });
   });
   elements.logoutBtn.addEventListener("click", logout);
-  elements.startAttendanceBtn.addEventListener("click", () => {
-    startAttendance().catch((error) => {
-      console.error(error);
-      showToast("Gagal memulai absensi hari ini.", "error");
-    });
-  });
+  elements.startAttendanceBtn.addEventListener("click", startAttendance);
   elements.generateReportBtn.addEventListener("click", handleGenerateReport);
   elements.exportReportExcelBtn.addEventListener("click", exportCurrentReportExcel);
   elements.exportReportPdfBtn.addEventListener("click", exportCurrentReportPdf);
@@ -205,10 +200,10 @@ function getAccountDisplayName(username) {
   return displayNames[username] || username;
 }
 
-async function startAttendance() {
+function startAttendance() {
   if (!state.currentUser || isBpadAccount() || isScopeFrozen(state.activeDate)) return;
 
-  await persistAttendanceBulk(
+  persistAttendanceBulk(
     state.activeDate,
     getVisibleEmployees().map((employee) => employee.id),
     "hadir"
@@ -360,14 +355,14 @@ function renderEmployeeSection(title, employees, dateAttendance) {
   `;
 }
 
-async function handleStatusChange(event) {
+function handleStatusChange(event) {
   if (isBpadAccount() || isScopeFrozen(state.activeDate)) {
     return;
   }
 
   const employeeId = event.currentTarget.dataset.employeeId;
   const status = event.currentTarget.dataset.status;
-  await persistAttendanceStatus(state.activeDate, employeeId, status);
+  persistAttendanceStatus(state.activeDate, employeeId, status);
 
   renderSummary();
   renderAttendanceList();

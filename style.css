@@ -1156,6 +1156,10 @@ select:focus {
   justify-content: flex-end;
 }
 
+#saveReportBtn {
+  order: -1;
+}
+
 .modal-content {
   max-height: calc(100vh - 250px);
   overflow: auto;
@@ -1416,6 +1420,15 @@ tbody tr:hover {
 
   .modal-actions {
     justify-content: stretch;
+    flex-direction: column;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+  }
+
+  .modal-actions .icon-btn {
+    align-self: flex-end;
   }
 
   .toast-container {

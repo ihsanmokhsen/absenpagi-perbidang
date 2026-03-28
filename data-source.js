@@ -227,17 +227,7 @@ async function syncMonthlyData(monthKey) {
   mergeReportRowsIntoStorage(reportRows, [...dateKeys]);
 }
 
-async function persistAttendanceStatus(dateKey, employeeId, status) {
-  if (APP_CONFIG.dataMode === "online") {
-    await postJson(`${APP_CONFIG.apiBaseUrl}/attendance`, {
-      action: "upsert",
-      date: dateKey,
-      employeeId,
-      status,
-      username: state.currentUser?.username || null,
-    });
-  }
-
+function setLocalAttendanceStatus(dateKey, employeeId, status) {
   const attendanceStore = loadFromStorage(STORAGE_KEYS.attendance, {});
   const dateData = attendanceStore[dateKey] || {};
   dateData[employeeId] = status;
@@ -245,17 +235,7 @@ async function persistAttendanceStatus(dateKey, employeeId, status) {
   saveToStorage(STORAGE_KEYS.attendance, attendanceStore);
 }
 
-async function persistAttendanceBulk(dateKey, employeeIds, status) {
-  if (APP_CONFIG.dataMode === "online") {
-    await postJson(`${APP_CONFIG.apiBaseUrl}/attendance`, {
-      action: "bulk_upsert",
-      date: dateKey,
-      employeeIds,
-      status,
-      username: state.currentUser?.username || null,
-    });
-  }
-
+function setLocalAttendanceBulk(dateKey, employeeIds, status) {
   const attendanceStore = loadFromStorage(STORAGE_KEYS.attendance, {});
   const dateData = attendanceStore[dateKey] || {};
 
@@ -265,6 +245,62 @@ async function persistAttendanceBulk(dateKey, employeeIds, status) {
 
   attendanceStore[dateKey] = dateData;
   saveToStorage(STORAGE_KEYS.attendance, attendanceStore);
+}
+
+function queueAttendanceStatusSync(dateKey, employeeId, status) {
+  if (APP_CONFIG.dataMode !== "online") {
+    return;
+  }
+
+  const timerKey = `${dateKey}:${employeeId}`;
+  if (state.attendanceSyncTimers[timerKey]) {
+    window.clearTimeout(state.attendanceSyncTimers[timerKey]);
+  }
+
+  state.attendanceSyncTimers[timerKey] = window.setTimeout(async () => {
+    try {
+      await postJson(`${APP_CONFIG.apiBaseUrl}/attendance`, {
+        action: "upsert",
+        date: dateKey,
+        employeeId,
+        status,
+        username: state.currentUser?.username || null,
+      });
+    } catch (error) {
+      console.error(error);
+      if (typeof showToast === "function") {
+        showToast("Sinkronisasi status pegawai gagal. Coba lagi sebentar.", "error");
+      }
+    } finally {
+      delete state.attendanceSyncTimers[timerKey];
+    }
+  }, 180);
+}
+
+function persistAttendanceStatus(dateKey, employeeId, status) {
+  setLocalAttendanceStatus(dateKey, employeeId, status);
+  queueAttendanceStatusSync(dateKey, employeeId, status);
+}
+
+function persistAttendanceBulk(dateKey, employeeIds, status) {
+  setLocalAttendanceBulk(dateKey, employeeIds, status);
+
+  if (APP_CONFIG.dataMode !== "online") {
+    return;
+  }
+
+  postJson(`${APP_CONFIG.apiBaseUrl}/attendance`, {
+    action: "bulk_upsert",
+    date: dateKey,
+    employeeIds,
+    status,
+    username: state.currentUser?.username || null,
+  }).catch((error) => {
+    console.error(error);
+    if (typeof showToast === "function") {
+      showToast("Sinkronisasi absensi massal gagal. Coba lagi sebentar.", "error");
+    }
+  });
 }
 
 async function persistDailyReportOnline(report, bidangCode) {
