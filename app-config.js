@@ -1,4 +1,4 @@
 window.BPAD_APP_CONFIG = {
-  dataMode: "local",
+  dataMode: "online",
   apiBaseUrl: "/api",
 };
