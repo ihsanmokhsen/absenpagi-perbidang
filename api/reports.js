@@ -1,4 +1,5 @@
 const { findAccountId, parseRequestBody, sendJson, supabaseFetch } = require("./_lib/supabase");
+const { getAuthenticatedUser } = require("./_lib/auth");
 
 async function getReportRows({ date, from, to }) {
   const query = new URLSearchParams({
@@ -88,6 +89,12 @@ async function reopenReport({ date, bidang }) {
 
 module.exports = async (req, res) => {
   try {
+    const user = getAuthenticatedUser(req);
+
+    if (!user) {
+      return sendJson(res, 401, { message: "Sesi tidak valid atau sudah berakhir. Silakan login kembali." });
+    }
+
     if (req.method === "GET") {
       const { date, from, to } = req.query || {};
 
@@ -96,18 +103,39 @@ module.exports = async (req, res) => {
       }
 
       const data = await getReportRows({ date, from, to });
-      return sendJson(res, 200, { data });
+      const scopedData =
+        user.accessScope === "ALL"
+          ? data
+          : data.filter((row) => row.bidang === user.bidangCode);
+
+      return sendJson(res, 200, { data: scopedData });
     }
 
     if (req.method === "POST") {
       const body = parseRequestBody(req);
 
       if (body.action === "save") {
-        await saveReport(body.report || {});
+        if (user.accessScope === "ALL") {
+          return sendJson(res, 403, { message: "Akun monitoring tidak diizinkan menyimpan laporan harian." });
+        }
+
+        if ((body.report || {}).bidang !== user.bidangCode) {
+          return sendJson(res, 403, { message: "Anda hanya dapat menyimpan laporan bidang sendiri." });
+        }
+
+        await saveReport({
+          ...(body.report || {}),
+          username: user.username,
+          bidang: user.bidangCode,
+        });
         return sendJson(res, 200, { success: true });
       }
 
       if (body.action === "reopen") {
+        if (user.accessScope !== "ALL") {
+          return sendJson(res, 403, { message: "Hanya akun BPAD yang dapat membuka ulang laporan." });
+        }
+
         await reopenReport({ date: body.date, bidang: body.bidang });
         return sendJson(res, 200, { success: true });
       }

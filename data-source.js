@@ -50,6 +50,7 @@ async function authenticateUserLocal({ username, password }) {
 async function authenticateUserOnline({ username, password }) {
   const response = await fetch(`${APP_CONFIG.apiBaseUrl}/login`, {
     method: "POST",
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
     },
@@ -63,6 +64,30 @@ async function authenticateUserOnline({ username, password }) {
   }
 
   return result.user;
+}
+
+async function getOnlineSession() {
+  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/session`, {
+    credentials: "same-origin",
+  });
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(result.message || "Sesi online tidak valid.");
+  }
+
+  return result.user;
+}
+
+async function logoutOnline() {
+  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/logout`, {
+    method: "POST",
+    credentials: "same-origin",
+  });
+
+  if (!response.ok) {
+    throw new Error("Gagal keluar dari sesi online.");
+  }
 }
 
 async function loadEmployeeDirectory() {
@@ -311,25 +336,33 @@ async function reopenDailyReport(dateKey, bidang) {
 
 async function fetchAttendanceRowsByDate(dateKey) {
   const query = new URLSearchParams({ date: dateKey });
-  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/attendance?${query.toString()}`);
+  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/attendance?${query.toString()}`, {
+    credentials: "same-origin",
+  });
   return unwrapRowsResponse(response, "Gagal memuat absensi harian online.");
 }
 
 async function fetchAttendanceRowsByRange(from, to) {
   const query = new URLSearchParams({ from, to });
-  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/attendance?${query.toString()}`);
+  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/attendance?${query.toString()}`, {
+    credentials: "same-origin",
+  });
   return unwrapRowsResponse(response, "Gagal memuat absensi bulanan online.");
 }
 
 async function fetchReportRowsByDate(dateKey) {
   const query = new URLSearchParams({ date: dateKey });
-  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/reports?${query.toString()}`);
+  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/reports?${query.toString()}`, {
+    credentials: "same-origin",
+  });
   return unwrapRowsResponse(response, "Gagal memuat laporan harian online.");
 }
 
 async function fetchReportRowsByRange(from, to) {
   const query = new URLSearchParams({ from, to });
-  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/reports?${query.toString()}`);
+  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/reports?${query.toString()}`, {
+    credentials: "same-origin",
+  });
   return unwrapRowsResponse(response, "Gagal memuat laporan bulanan online.");
 }
 
@@ -346,6 +379,7 @@ async function unwrapRowsResponse(response, fallbackMessage) {
 async function postJson(url, body) {
   const response = await fetch(url, {
     method: "POST",
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
     },

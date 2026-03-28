@@ -6,6 +6,7 @@ const {
   sendJson,
   supabaseFetch,
 } = require("./_lib/supabase");
+const { getAuthenticatedUser } = require("./_lib/auth");
 
 async function getAttendanceRows({ date, from, to }) {
   const query = new URLSearchParams({
@@ -42,6 +43,11 @@ async function getAttendanceRows({ date, from, to }) {
 async function upsertAttendance({ date, employeeIds, status, username }) {
   const accountId = await findAccountId(username);
   const employees = await fetchEmployeesByCodes(employeeIds);
+
+  if (employees.length !== employeeIds.length) {
+    throw new Error("Sebagian data pegawai tidak ditemukan.");
+  }
+
   const payload = employees.map((employee) => ({
     attendance_date: date,
     employee_id: employee.id,
@@ -65,8 +71,32 @@ async function upsertAttendance({ date, employeeIds, status, username }) {
   }
 }
 
+async function getLockedBidangForDate(date, bidangCodes) {
+  if (!bidangCodes.length) {
+    return [];
+  }
+
+  const inClause = bidangCodes.map((code) => `"${code}"`).join(",");
+  const query = new URLSearchParams({
+    select: "bidang_code",
+    report_date: `eq.${date}`,
+    bidang_code: `in.(${inClause})`,
+    is_locked: "eq.true",
+  });
+
+  const response = await supabaseFetch(`/rest/v1/app_daily_reports?${query.toString()}`);
+  const rows = await response.json();
+  return rows.map((row) => row.bidang_code);
+}
+
 module.exports = async (req, res) => {
   try {
+    const user = getAuthenticatedUser(req);
+
+    if (!user) {
+      return sendJson(res, 401, { message: "Sesi tidak valid atau sudah berakhir. Silakan login kembali." });
+    }
+
     if (req.method === "GET") {
       const { date, from, to } = req.query || {};
 
@@ -75,18 +105,43 @@ module.exports = async (req, res) => {
       }
 
       const data = await getAttendanceRows({ date, from, to });
-      return sendJson(res, 200, { data });
+      const scopedData =
+        user.accessScope === "ALL"
+          ? data
+          : data.filter((row) => row.bidang === user.bidangCode);
+
+      return sendJson(res, 200, { data: scopedData });
     }
 
     if (req.method === "POST") {
+      if (user.accessScope === "ALL") {
+        return sendJson(res, 403, { message: "Akun monitoring tidak diizinkan mengubah absensi." });
+      }
+
       const body = parseRequestBody(req);
+      const employeeIds =
+        body.action === "bulk_upsert" ? body.employeeIds || [] : body.employeeId ? [body.employeeId] : [];
+      const employees = await fetchEmployeesByCodes(employeeIds);
+
+      if (!employees.length || employees.some((employee) => employee.bidang_code !== user.bidangCode)) {
+        return sendJson(res, 403, { message: "Anda hanya dapat mengubah absensi pada bidang sendiri." });
+      }
+
+      const lockedBidang = await getLockedBidangForDate(body.date, [user.bidangCode]);
+
+      if (lockedBidang.length) {
+        return sendJson(res, 403, {
+          message:
+            "Absensi hari ini sudah dibekukan karena laporan harian telah disimpan. Data tidak dapat diubah lagi. Jika diperlukan perbaikan, silakan hubungi kepegawaian.",
+        });
+      }
 
       if (body.action === "upsert") {
         await upsertAttendance({
           date: body.date,
-          employeeIds: [body.employeeId],
+          employeeIds,
           status: body.status,
-          username: body.username,
+          username: user.username,
         });
         return sendJson(res, 200, { success: true });
       }
@@ -94,9 +149,9 @@ module.exports = async (req, res) => {
       if (body.action === "bulk_upsert") {
         await upsertAttendance({
           date: body.date,
-          employeeIds: body.employeeIds || [],
+          employeeIds,
           status: body.status,
-          username: body.username,
+          username: user.username,
         });
         return sendJson(res, 200, { success: true });
       }

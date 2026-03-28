@@ -1,4 +1,11 @@
-const { parseRequestBody, sendJson, sha256, supabaseFetch } = require("./_lib/supabase");
+const { setSessionCookie } = require("./_lib/auth");
+const {
+  parseRequestBody,
+  sendJson,
+  supabaseFetch,
+  updateAccountPasswordHash,
+  verifyPassword,
+} = require("./_lib/supabase");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -21,23 +28,36 @@ module.exports = async (req, res) => {
     const response = await supabaseFetch(`/rest/v1/app_accounts?${query.toString()}`);
 
     if (!response.ok) {
-      const detail = await response.text();
       return sendJson(res, 500, {
-        message: `Gagal mengambil data akun dari Supabase. ${detail || `HTTP ${response.status}`}`,
+        message: "Gagal mengambil data akun dari Supabase.",
       });
     }
 
     const [account] = await response.json();
+    const passwordCheck = verifyPassword(password, account?.password_hash);
 
-    if (!account || !account.is_active || account.password_hash !== sha256(password)) {
+    if (!account || !account.is_active || !passwordCheck.valid) {
       return sendJson(res, 401, { message: "Akun atau password tidak sesuai." });
     }
 
+    if (passwordCheck.upgradedHash) {
+      await updateAccountPasswordHash(account.username, passwordCheck.upgradedHash);
+    }
+
+    const sessionUser = {
+      username: account.username,
+      displayName: account.display_name,
+      accessScope: account.access_scope,
+      bidangCode: account.bidang_code || null,
+    };
+
+    setSessionCookie(res, sessionUser);
+
     return sendJson(res, 200, {
       user: {
-        username: account.username,
-        displayName: account.display_name,
-        scope: account.access_scope === "ALL" ? "ALL" : [account.bidang_code],
+        username: sessionUser.username,
+        displayName: sessionUser.displayName,
+        scope: sessionUser.accessScope === "ALL" ? "ALL" : [sessionUser.bidangCode],
       },
     });
   } catch (error) {

@@ -141,8 +141,9 @@ Catatan:
 1. Buat project Supabase baru.
 2. Buka SQL Editor.
 3. Jalankan isi file [supabase/schema.sql](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/supabase/schema.sql).
-4. Jalankan isi file [supabase/seed-pegawai.sql](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/supabase/seed-pegawai.sql).
-5. Pastikan tabel `app_bidang`, `app_accounts`, dan `app_pegawai` berhasil terisi.
+4. Tambahkan akun aplikasi secara manual ke tabel `app_accounts`.
+5. Jalankan isi file [supabase/seed-pegawai.sql](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/supabase/seed-pegawai.sql).
+6. Pastikan tabel `app_bidang`, `app_accounts`, dan `app_pegawai` berhasil terisi.
 
 ## 7. Langkah Setup Vercel
 
@@ -151,6 +152,7 @@ Catatan:
 3. Tambahkan environment variable:
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
+   - `APP_SESSION_SECRET` disarankan untuk menandatangani cookie sesi
 4. Deploy ulang project.
 
 ## 8. Endpoint yang Sudah Disiapkan
@@ -158,6 +160,8 @@ Catatan:
 Endpoint awal yang sudah tersedia:
 
 - `/api/login`
+- `/api/session`
+- `/api/logout`
 - `/api/employees` (opsional, saat ini frontend utama memakai data pegawai statis agar lebih cepat)
 - `/api/attendance`
 - `/api/reports`
@@ -165,6 +169,8 @@ Endpoint awal yang sudah tersedia:
 Fungsi masing-masing:
 
 - `login`: validasi akun biasa menggunakan tabel `app_accounts`
+- `session`: membaca sesi login aktif dari cookie HTTP-only
+- `logout`: menghapus sesi login aktif
 - `employees`: mengambil daftar pegawai aktif dari tabel `app_pegawai` bila sewaktu-waktu ingin dipakai lagi
 - `attendance`: baca dan simpan absensi harian/bulanan
 - `reports`: simpan, baca, dan buka ulang laporan harian
@@ -175,7 +181,7 @@ Setelah fondasi ini siap, tahap berikutnya yang saya sarankan adalah:
 
 1. hilangkan ketergantungan dropdown akun statis dari frontend
 2. tambahkan endpoint sinkronisasi atau import awal data absensi lama jika diperlukan
-3. tambahkan validasi hak akses per akun di backend
+3. tambahkan audit trail lebih rinci per aksi backend
 4. tambahkan audit log perubahan absensi
 5. kurangi ketergantungan `localStorage` agar benar-benar online penuh
 
@@ -194,11 +200,13 @@ Ini sengaja dibuat bertahap supaya migrasi tetap aman.
 Urutan aktivasi yang paling aman:
 
 1. Jalankan [supabase/schema.sql](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/supabase/schema.sql)
-2. Jalankan [supabase/seed-pegawai.sql](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/supabase/seed-pegawai.sql)
-3. Import repo GitHub ke Vercel
-4. Isi environment variable:
+2. Tambahkan akun ke tabel `app_accounts`
+3. Jalankan [supabase/seed-pegawai.sql](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/supabase/seed-pegawai.sql)
+4. Import repo GitHub ke Vercel
+5. Isi environment variable:
    - `SUPABASE_URL`
    - `SUPABASE_SERVICE_ROLE_KEY`
-5. Ubah [app-config.js](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/app-config.js) menjadi mode `online`
-6. Deploy ulang atau refresh aplikasi
-7. Uji login, daftar pegawai, mulai absen, simpan laporan, dan rekap bulanan
+   - `APP_SESSION_SECRET` disarankan
+6. Ubah [app-config.js](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/app-config.js) menjadi mode `online`
+7. Deploy ulang atau refresh aplikasi
+8. Uji login, daftar pegawai, mulai absen, simpan laporan, dan rekap bulanan

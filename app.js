@@ -90,6 +90,21 @@ async function handleLogin(event) {
 }
 
 async function restoreSession() {
+  if (APP_CONFIG.dataMode === "online") {
+    try {
+      const session = await getOnlineSession();
+      state.currentUser = session;
+      state.selectedMonitoringBidang = null;
+      persistSession(session);
+      await showDashboard();
+      return;
+    } catch (error) {
+      clearStoredSession();
+      showLogin();
+      return;
+    }
+  }
+
   const session = getStoredSession();
   if (!session) {
     showLogin();
@@ -127,7 +142,15 @@ async function showDashboard() {
   renderDashboard();
 }
 
-function logout() {
+async function logout() {
+  if (APP_CONFIG.dataMode === "online") {
+    try {
+      await logoutOnline();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   clearStoredSession();
   state.currentUser = null;
   state.currentReport = null;

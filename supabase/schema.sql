@@ -77,19 +77,10 @@ set
   name = excluded.name,
   sort_order = excluded.sort_order;
 
-insert into public.app_accounts (username, display_name, password_hash, access_scope, bidang_code, is_active)
-values
-  ('Badan Pendapatan dan Aset Daerah', 'Badan Pendapatan dan Aset Daerah', '6b0a8a804ba20425b20816bbe9bf69e31696348506b05329abc15c2e417d9b01', 'ALL', null, true),
-  ('SEKRETARIAT', 'Sekretariat', '10449288371e4d99d2a73672e5d6d32cb4fbc42b138bac9464999ad944a403e7', 'BIDANG', 'SEKRETARIAT', true),
-  ('PENDAPATAN 1', 'Pendapatan 1', 'fd7fc6501b223e36ffd3da053c6b74ac9c232dda069e4b7309dc8a8a55d63080', 'BIDANG', 'PENDAPATAN 1', true),
-  ('PENDAPATAN 2', 'Pendapatan 2', '3d7320763edfdb9bc0ad1301363d0fc6cedc6796f2ae3affd72cfdc7a1fc0b14', 'BIDANG', 'PENDAPATAN 2', true),
-  ('ASET 1', 'Aset 1', '85fe761080a6c1fce674fba83c68401fa66177150119fe941d8b71db201217a8', 'BIDANG', 'ASET 1', true),
-  ('ASET 2', 'Aset 2', 'd927eb5b2b770b45cb2b75382c6901b035b166a531bdef97ec30e43b947ec47f', 'BIDANG', 'ASET 2', true)
-on conflict (username) do update
-set
-  display_name = excluded.display_name,
-  password_hash = excluded.password_hash,
-  access_scope = excluded.access_scope,
-  bidang_code = excluded.bidang_code,
-  is_active = excluded.is_active,
-  updated_at = now();
+-- Demi keamanan, seed akun aplikasi tidak disimpan langsung di repository publik.
+-- Tambahkan akun secara manual di project Supabase Anda, misalnya:
+--
+-- insert into public.app_accounts (username, display_name, password_hash, access_scope, bidang_code, is_active)
+-- values
+--   ('Badan Pendapatan dan Aset Daerah', 'Badan Pendapatan dan Aset Daerah', '<hash-password-aman>', 'ALL', null, true),
+--   ('SEKRETARIAT', 'Sekretariat', '<hash-password-aman>', 'BIDANG', 'SEKRETARIAT', true);
