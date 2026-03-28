@@ -2,12 +2,13 @@ const { sendJson, supabaseFetch } = require("./_lib/supabase");
 
 module.exports = async (_req, res) => {
   try {
-    const requestUrl = new URL(`${process.env.SUPABASE_URL}/rest/v1/app_pegawai`);
-    requestUrl.searchParams.set("select", "employee_code,nama,jenis,bidang_code");
-    requestUrl.searchParams.set("is_active", "eq.true");
-    requestUrl.searchParams.set("order", "employee_code.asc");
+    const query = new URLSearchParams({
+      select: "employee_code,nama,jenis,bidang_code",
+      is_active: "eq.true",
+      order: "employee_code.asc",
+    });
 
-    const response = await supabaseFetch(requestUrl.pathname + requestUrl.search);
+    const response = await supabaseFetch(`/rest/v1/app_pegawai?${query.toString()}`);
 
     if (!response.ok) {
       return sendJson(res, 500, { message: "Gagal mengambil data pegawai dari Supabase." });

@@ -1,8 +1,11 @@
 const crypto = require("node:crypto");
 
 function getSupabaseConfig() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const normalizedSupabaseUrl = supabaseUrl ? supabaseUrl.replace(/\/+$/, "") : "";
+
   return {
-    supabaseUrl: process.env.SUPABASE_URL,
+    supabaseUrl: normalizedSupabaseUrl,
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
   };
 }
@@ -16,6 +19,10 @@ async function supabaseFetch(path, options = {}) {
 
   if (!supabaseUrl || !serviceRoleKey) {
     throw new Error("Konfigurasi server Supabase belum lengkap.");
+  }
+
+  if (!/^https?:\/\//.test(supabaseUrl)) {
+    throw new Error("SUPABASE_URL tidak valid. Pastikan memakai Project URL dari Supabase.");
   }
 
   return fetch(`${supabaseUrl}${path}`, {

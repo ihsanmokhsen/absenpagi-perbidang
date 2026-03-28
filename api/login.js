@@ -12,15 +12,13 @@ module.exports = async (req, res) => {
       return sendJson(res, 400, { message: "Username dan password wajib diisi." });
     }
 
-    const requestUrl = new URL(`${process.env.SUPABASE_URL}/rest/v1/app_accounts`);
-    requestUrl.searchParams.set(
-      "select",
-      "username,display_name,access_scope,bidang_code,password_hash,is_active"
-    );
-    requestUrl.searchParams.set("username", `eq.${username}`);
-    requestUrl.searchParams.set("limit", "1");
+    const query = new URLSearchParams({
+      select: "username,display_name,access_scope,bidang_code,password_hash,is_active",
+      username: `eq.${username}`,
+      limit: "1",
+    });
 
-    const response = await supabaseFetch(requestUrl.pathname + requestUrl.search);
+    const response = await supabaseFetch(`/rest/v1/app_accounts?${query.toString()}`);
 
     if (!response.ok) {
       const detail = await response.text();
