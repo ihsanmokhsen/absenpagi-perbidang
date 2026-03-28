@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Absensi Apel Pagi BPAD Provinsi NTT</title>
+    <link rel="icon" type="image/png" href="logobaru.png" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="grid-wrapper">
+      <div class="grid-background"></div>
+      <div id="loginOverlay" class="login-overlay hidden" aria-hidden="true">
+        <span class="spinner login-overlay-spinner" id="loginOverlaySpinner" aria-hidden="true">
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+          <div></div>
+        </span>
+      </div>
+      <div class="app-shell">
+      <section id="loginView" class="login-view">
+        <div class="login-card login-card-minimal">
+          <div class="login-head">
+            <img src="logobaru.png" alt="Logo BPAD Provinsi NTT" class="brand-logo login-mini-logo" />
+          </div>
+
+          <form id="loginForm" class="login-form">
+            <label>
+              <span class="login-label">Akun</span>
+              <div class="input-shell">
+                <span class="input-icon">@</span>
+                <select id="accountSelect" required></select>
+              </div>
+            </label>
+
+            <label>
+              <span class="login-label">Password</span>
+              <div class="input-shell input-shell-password">
+                <input
+                  id="passwordInput"
+                  type="password"
+                  placeholder="Masukkan password"
+                  autocomplete="current-password"
+                  required
+                />
+              </div>
+            </label>
+
+            <button type="submit" class="btn btn-dark btn-block login-submit" id="loginSubmitBtn">
+              <span class="login-submit-label">Login</span>
+            </button>
+          </form>
+
+          <p id="loginMessage" class="form-message" role="alert"></p>
+        </div>
+      </section>
+
+      <section id="dashboardView" class="dashboard-view hidden">
+        <header class="topbar">
+          <div class="topbar-brand">
+            <img src="logobaru.png" alt="Logo BPAD Provinsi NTT" class="header-logo" />
+            <div>
+            <h2>Absensi Apel Pagi BPAD Provinsi NTT</h2>
+            <div class="meta-stack">
+              <p id="todayLabel" class="meta-line"></p>
+              <p id="liveClock" class="meta-line"></p>
+            </div>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <div class="account-pill">
+              <span>Akun Aktif</span>
+              <strong id="activeAccountName"></strong>
+            </div>
+            <button id="logoutBtn" class="btn btn-outline">Logout</button>
+          </div>
+        </header>
+
+        <main class="dashboard-grid">
+          <section class="panel controls-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Kontrol Absensi</p>
+                <h3>Pengaturan Hari Aktif</h3>
+              </div>
+            </div>
+
+            <div class="control-grid">
+              <label>
+                <span>Tanggal Aktif</span>
+                <input id="activeDateInput" type="text" readonly />
+              </label>
+              <label>
+                <span>Lingkup Data</span>
+                <input id="scopeInput" type="text" readonly />
+              </label>
+            </div>
+
+            <div class="toolbar">
+              <button id="startAttendanceBtn" class="btn btn-primary">
+                Mulai Absen
+              </button>
+              <button id="generateReportBtn" class="btn btn-primary">
+                Generate Laporan Harian
+              </button>
+              <button id="openMonthlyBtn" class="btn btn-secondary">
+                Lihat Rekap Bulanan
+              </button>
+            </div>
+
+            <div id="freezeNotice" class="freeze-notice hidden"></div>
+          </section>
+
+          <section class="panel summary-panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Ringkasan</p>
+                <h3 id="summaryTitle">Statistik Hari Ini</h3>
+              </div>
+            </div>
+
+            <div id="summaryCards" class="summary-grid"></div>
+          </section>
+
+          <section id="monitoringPanel" class="panel summary-panel hidden">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Monitoring BPAD</p>
+                <h3>Analisis Kedisiplinan Per Bidang</h3>
+              </div>
+            </div>
+
+            <div id="monitoringCards" class="monitoring-grid"></div>
+            <div id="reportedSummary" class="reported-summary"></div>
+          </section>
+
+          <section id="attendancePanel" class="panel attendance-panel">
+            <div class="panel-header sticky">
+              <div>
+                <p class="eyebrow">Daftar Pegawai</p>
+                <h3 id="attendanceTitle">Input Absensi Per Bidang</h3>
+                <p id="attendanceHint" class="section-note hidden"></p>
+              </div>
+            </div>
+
+            <div id="attendanceContainer" class="attendance-groups"></div>
+          </section>
+        </main>
+      </section>
+      </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="reportModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-modal="reportModal"></div>
+      <div class="modal-card modal-large">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Laporan Harian</p>
+            <h3>Preview Rekap Absensi</h3>
+          </div>
+          <div class="modal-actions">
+            <button id="exportReportExcelBtn" class="btn btn-secondary">Export Excel</button>
+            <button id="exportReportPdfBtn" class="btn btn-outline">Export PDF</button>
+          <button class="icon-btn" data-close-modal="reportModal" aria-label="Tutup">
+            ×
+          </button>
+          </div>
+        </div>
+
+        <div id="reportContent" class="modal-content"></div>
+        <div class="modal-footer">
+          <button id="saveReportBtn" class="btn btn-primary">Simpan Laporan</button>
+          <button class="btn btn-outline" data-close-modal="reportModal">Tutup</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="monthlyModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-modal="monthlyModal"></div>
+      <div class="modal-card modal-xl">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Rekap Bulanan</p>
+            <h3>Riwayat Absensi Pegawai</h3>
+          </div>
+          <button class="icon-btn" data-close-modal="monthlyModal" aria-label="Tutup">
+            ×
+          </button>
+        </div>
+
+        <div class="monthly-toolbar">
+          <label>
+            <span>Pilih Bulan</span>
+            <input id="monthPicker" type="month" />
+          </label>
+          <button id="refreshMonthlyBtn" class="btn btn-secondary">Tampilkan</button>
+          <button id="exportMonthlyExcelBtn" class="btn btn-secondary">Export Excel</button>
+          <button id="exportMonthlyPdfBtn" class="btn btn-outline">Export PDF</button>
+        </div>
+
+        <div id="monthlyContent" class="modal-content"></div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" data-close-modal="monthlyModal">Tutup</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app-config.js"></script>
+    <script src="app-local-auth.js"></script>
+    <script src="utils.js"></script>
+    <script src="config.js"></script>
+    <script src="data.js"></script>
+    <script src="data-source.js"></script>
+    <script src="reports.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

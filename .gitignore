@@ -1,0 +1,7 @@
+.DS_Store
+.env
+.env.*
+.netlify
+.vercel
+node_modules
+app-local-auth.js
