@@ -59,7 +59,7 @@ async function authenticateUserOnline({ username, password }) {
   const result = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(result.message || "Login online gagal diproses.");
+    throw new Error(result.message || `Login online gagal diproses (HTTP ${response.status}).`);
   }
 
   return result.user;

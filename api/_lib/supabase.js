@@ -73,10 +73,27 @@ function sendJson(res, statusCode, body) {
   res.status(statusCode).json(body);
 }
 
+function parseRequestBody(req) {
+  if (!req || typeof req.body === "undefined" || req.body === null) {
+    return {};
+  }
+
+  if (typeof req.body === "string") {
+    try {
+      return JSON.parse(req.body || "{}");
+    } catch (error) {
+      return {};
+    }
+  }
+
+  return req.body;
+}
+
 module.exports = {
   fetchEmployeesByCodes,
   fetchEmployeesByIds,
   findAccountId,
+  parseRequestBody,
   sendJson,
   sha256,
   supabaseFetch,

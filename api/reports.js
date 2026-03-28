@@ -1,4 +1,4 @@
-const { findAccountId, sendJson, supabaseFetch } = require("./_lib/supabase");
+const { findAccountId, parseRequestBody, sendJson, supabaseFetch } = require("./_lib/supabase");
 
 async function getReportRows({ date, from, to }) {
   const query = new URLSearchParams({
@@ -100,7 +100,7 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "POST") {
-      const body = req.body || {};
+      const body = parseRequestBody(req);
 
       if (body.action === "save") {
         await saveReport(body.report || {});

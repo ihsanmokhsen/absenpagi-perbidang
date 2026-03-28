@@ -2,6 +2,7 @@ const {
   fetchEmployeesByCodes,
   fetchEmployeesByIds,
   findAccountId,
+  parseRequestBody,
   sendJson,
   supabaseFetch,
 } = require("./_lib/supabase");
@@ -78,7 +79,7 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "POST") {
-      const body = req.body || {};
+      const body = parseRequestBody(req);
 
       if (body.action === "upsert") {
         await upsertAttendance({

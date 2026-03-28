@@ -1,4 +1,4 @@
-const { sendJson, sha256, supabaseFetch } = require("./_lib/supabase");
+const { parseRequestBody, sendJson, sha256, supabaseFetch } = require("./_lib/supabase");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { username, password } = req.body || {};
+    const { username, password } = parseRequestBody(req);
 
     if (!username || !password) {
       return sendJson(res, 400, { message: "Username dan password wajib diisi." });
@@ -23,7 +23,10 @@ module.exports = async (req, res) => {
     const response = await supabaseFetch(requestUrl.pathname + requestUrl.search);
 
     if (!response.ok) {
-      return sendJson(res, 500, { message: "Gagal mengambil data akun dari Supabase." });
+      const detail = await response.text();
+      return sendJson(res, 500, {
+        message: `Gagal mengambil data akun dari Supabase. ${detail || `HTTP ${response.status}`}`,
+      });
     }
 
     const [account] = await response.json();
@@ -40,6 +43,8 @@ module.exports = async (req, res) => {
       },
     });
   } catch (error) {
-    return sendJson(res, 500, { message: "Terjadi kesalahan saat login online." });
+    return sendJson(res, 500, {
+      message: error.message || "Terjadi kesalahan saat login online.",
+    });
   }
 };
