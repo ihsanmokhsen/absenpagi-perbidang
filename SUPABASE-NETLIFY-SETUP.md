@@ -158,14 +158,14 @@ Catatan:
 Endpoint awal yang sudah tersedia:
 
 - `/api/login`
-- `/api/employees`
+- `/api/employees` (opsional, saat ini frontend utama memakai data pegawai statis agar lebih cepat)
 - `/api/attendance`
 - `/api/reports`
 
 Fungsi masing-masing:
 
 - `login`: validasi akun biasa menggunakan tabel `app_accounts`
-- `employees`: mengambil daftar pegawai aktif dari tabel `app_pegawai`
+- `employees`: mengambil daftar pegawai aktif dari tabel `app_pegawai` bila sewaktu-waktu ingin dipakai lagi
 - `attendance`: baca dan simpan absensi harian/bulanan
 - `reports`: simpan, baca, dan buka ulang laporan harian
 

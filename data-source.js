@@ -66,43 +66,7 @@ async function authenticateUserOnline({ username, password }) {
 }
 
 async function loadEmployeeDirectory() {
-  if (APP_CONFIG.dataMode === "online") {
-    try {
-      return await loadEmployeeDirectoryOnline();
-    } catch (error) {
-      console.warn("Gagal memuat data pegawai online, fallback ke data lokal.", error);
-    }
-  }
-
   return cloneEmployeeDirectory();
-}
-
-async function loadEmployeeDirectoryOnline() {
-  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/employees`);
-  const result = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(result.message || "Gagal memuat data pegawai online.");
-  }
-
-  return normalizeEmployeeDirectory(result.data || []);
-}
-
-function normalizeEmployeeDirectory(rows) {
-  return rows.reduce((groups, row) => {
-    if (!groups[row.bidang]) {
-      groups[row.bidang] = [];
-    }
-
-    groups[row.bidang].push({
-      id: row.id,
-      nama: row.nama,
-      bidang: row.bidang,
-      jenis: row.jenis,
-    });
-
-    return groups;
-  }, {});
 }
 
 function getStoredSession() {
