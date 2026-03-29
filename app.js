@@ -33,6 +33,12 @@ function bindEvents() {
     });
   });
   elements.logoutBtn.addEventListener("click", logout);
+  elements.manageAccountsBtn.addEventListener("click", () => {
+    openManageAccounts().catch((error) => {
+      console.error(error);
+      showToast("Gagal membuka kelola password akun.", "error");
+    });
+  });
   elements.startAttendanceBtn.addEventListener("click", startAttendance);
   elements.generateReportBtn.addEventListener("click", handleGenerateReport);
   elements.exportReportExcelBtn.addEventListener("click", exportCurrentReportExcel);
@@ -57,6 +63,12 @@ function bindEvents() {
   });
   elements.exportMonthlyExcelBtn.addEventListener("click", exportMonthlyRecapExcel);
   elements.exportMonthlyPdfBtn.addEventListener("click", exportMonthlyRecapPdf);
+  elements.saveManagedAccountPasswordBtn.addEventListener("click", () => {
+    handleSaveManagedAccountPassword().catch((error) => {
+      console.error(error);
+      showToast("Gagal menyimpan password akun.", "error");
+    });
+  });
   elements.attendanceContainer.addEventListener("click", handleAttendanceContainerClick);
 
   document.querySelectorAll("[data-close-modal]").forEach((button) => {
@@ -155,6 +167,7 @@ async function logout() {
   state.currentUser = null;
   state.currentReport = null;
   state.selectedMonitoringBidang = null;
+  resetManageAccountsForm();
   showLogin();
 }
 
@@ -184,6 +197,73 @@ function delay(ms) {
   });
 }
 
+async function openManageAccounts() {
+  if (!isBpadAccount()) {
+    return;
+  }
+
+  resetManageAccountsForm();
+  elements.saveManagedAccountPasswordBtn.disabled = true;
+  elements.managedAccountSelect.innerHTML = '<option value="">Memuat akun bidang...</option>';
+  openModal("accountsModal");
+
+  const accounts = await fetchManageableAccounts();
+  elements.managedAccountSelect.innerHTML = `
+    <option value="">Pilih akun bidang</option>
+    ${accounts
+      .filter((account) => account.is_active)
+      .map(
+        (account) => `
+          <option value="${account.username}">${account.display_name || account.username}</option>
+        `
+      )
+      .join("")}
+  `;
+  elements.saveManagedAccountPasswordBtn.disabled = false;
+}
+
+async function handleSaveManagedAccountPassword() {
+  const username = elements.managedAccountSelect.value;
+  const newPassword = elements.managedAccountPasswordInput.value.trim();
+  const confirmPassword = elements.managedAccountPasswordConfirmInput.value.trim();
+
+  if (!username) {
+    elements.manageAccountsMessage.textContent = "Pilih akun bidang terlebih dahulu.";
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    elements.manageAccountsMessage.textContent = "Password baru minimal 6 karakter.";
+    return;
+  }
+
+  if (newPassword !== confirmPassword) {
+    elements.manageAccountsMessage.textContent = "Konfirmasi password baru tidak cocok.";
+    return;
+  }
+
+  elements.manageAccountsMessage.textContent = "";
+  elements.saveManagedAccountPasswordBtn.disabled = true;
+
+  try {
+    const result = await updateManagedAccountPassword(username, newPassword);
+    showToast(result.message || "Password akun berhasil diperbarui.", "success");
+    resetManageAccountsForm();
+    closeModal("accountsModal");
+  } catch (error) {
+    elements.manageAccountsMessage.textContent =
+      error.message || "Gagal memperbarui password akun bidang.";
+  } finally {
+    elements.saveManagedAccountPasswordBtn.disabled = false;
+  }
+}
+
+function resetManageAccountsForm() {
+  elements.accountPasswordForm?.reset();
+  elements.manageAccountsMessage.textContent = "";
+  elements.managedAccountSelect.innerHTML = '<option value="">Pilih akun bidang</option>';
+}
+
 function renderDashboard() {
   renderSummary();
   renderMonitoringInsights();
@@ -196,6 +276,7 @@ function updateToolbarAccess() {
 
   elements.generateReportBtn.classList.toggle("hidden", isMonitoringOnly);
   elements.startAttendanceBtn.classList.toggle("hidden", isMonitoringOnly);
+  elements.manageAccountsBtn.classList.toggle("hidden", !isMonitoringOnly);
   elements.monitoringPanel.classList.toggle("hidden", !isMonitoringOnly);
 
   if (!isMonitoringOnly) {

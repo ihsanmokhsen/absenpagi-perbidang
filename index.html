@@ -80,6 +80,7 @@
               <span>Akun Aktif</span>
               <strong id="activeAccountName"></strong>
             </div>
+            <button id="manageAccountsBtn" class="btn btn-secondary hidden">Kelola Password</button>
             <button id="logoutBtn" class="btn btn-outline">Logout</button>
           </div>
         </header>
@@ -211,6 +212,68 @@
         <div id="monthlyContent" class="modal-content"></div>
         <div class="modal-footer">
           <button class="btn btn-outline" data-close-modal="monthlyModal">Tutup</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="accountsModal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-modal="accountsModal"></div>
+      <div class="modal-card modal-medium">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Kelola Akun</p>
+            <h3>Ubah Password Akun Bidang</h3>
+          </div>
+          <button class="icon-btn" data-close-modal="accountsModal" aria-label="Tutup">
+            ×
+          </button>
+        </div>
+
+        <div class="modal-content">
+          <form id="accountPasswordForm" class="manage-account-form">
+            <label>
+              <span>Pilih Akun Bidang</span>
+              <div class="input-shell">
+                <select id="managedAccountSelect" required>
+                  <option value="">Pilih akun bidang</option>
+                </select>
+              </div>
+            </label>
+
+            <label>
+              <span>Password Baru</span>
+              <div class="input-shell input-shell-password">
+                <input
+                  id="managedAccountPasswordInput"
+                  type="password"
+                  placeholder="Masukkan password baru"
+                  minlength="6"
+                  required
+                />
+              </div>
+            </label>
+
+            <label>
+              <span>Konfirmasi Password Baru</span>
+              <div class="input-shell input-shell-password">
+                <input
+                  id="managedAccountPasswordConfirmInput"
+                  type="password"
+                  placeholder="Ulangi password baru"
+                  minlength="6"
+                  required
+                />
+              </div>
+            </label>
+
+            <p class="section-note">Hanya akun BPAD yang dapat mengubah password akun bidang.</p>
+            <p id="manageAccountsMessage" class="form-message" role="alert"></p>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button id="saveManagedAccountPasswordBtn" class="btn btn-primary">Simpan Password</button>
+          <button class="btn btn-outline" data-close-modal="accountsModal">Tutup</button>
         </div>
       </div>
     </div>

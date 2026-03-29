@@ -1129,6 +1129,10 @@ select:focus {
   width: min(1000px, 100%);
 }
 
+.modal-medium {
+  width: min(560px, 100%);
+}
+
 .modal-xl {
   width: min(1240px, 100%);
 }
@@ -1288,6 +1292,11 @@ select:focus {
   flex-wrap: wrap;
   border-top: 1px solid #edf1f6;
   border-bottom: 1px solid #edf1f6;
+}
+
+.manage-account-form {
+  display: grid;
+  gap: 14px;
 }
 
 .table-wrap {

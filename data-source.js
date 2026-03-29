@@ -53,6 +53,26 @@ async function logoutOnline() {
   }
 }
 
+async function fetchManageableAccounts() {
+  const response = await fetch(`${APP_CONFIG.apiBaseUrl}/accounts`, {
+    credentials: "same-origin",
+  });
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(result.message || "Gagal memuat daftar akun bidang.");
+  }
+
+  return result.data || [];
+}
+
+async function updateManagedAccountPassword(username, newPassword) {
+  return postJson(`${APP_CONFIG.apiBaseUrl}/accounts`, {
+    username,
+    newPassword,
+  });
+}
+
 async function loadEmployeeDirectory() {
   return cloneEmployeeDirectory();
 }
