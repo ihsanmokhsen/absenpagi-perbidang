@@ -16,7 +16,6 @@ Yang sudah disiapkan:
 - [config.js](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/config.js)
 - [data-source.js](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/data-source.js)
 - [api/login.js](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/api/login.js)
-- [api/employees.js](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/api/employees.js)
 - [api/attendance.js](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/api/attendance.js)
 - [api/reports.js](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/api/reports.js)
 - [vercel.json](/Users/ihsanmokhsen/Documents/@Project Sistem Informasi/Absenpagi-bidang/vercel.json)
@@ -162,7 +161,6 @@ Endpoint awal yang sudah tersedia:
 - `/api/login`
 - `/api/session`
 - `/api/logout`
-- `/api/employees` (opsional, saat ini frontend utama memakai data pegawai statis agar lebih cepat)
 - `/api/attendance`
 - `/api/reports`
 
@@ -171,7 +169,6 @@ Fungsi masing-masing:
 - `login`: validasi akun biasa menggunakan tabel `app_accounts`
 - `session`: membaca sesi login aktif dari cookie HTTP-only
 - `logout`: menghapus sesi login aktif
-- `employees`: mengambil daftar pegawai aktif dari tabel `app_pegawai` bila sewaktu-waktu ingin dipakai lagi
 - `attendance`: baca dan simpan absensi harian/bulanan
 - `reports`: simpan, baca, dan buka ulang laporan harian
 
