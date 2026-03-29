@@ -1,24 +1,5 @@
-function getLocalAccountByUsername(username) {
-  return ACCOUNTS.find((account) => account.username === username) || null;
-}
-
-async function sha256Hex(value) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(value);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
 function cloneEmployeeDirectory(directory = EMPLOYEES) {
   return JSON.parse(JSON.stringify(directory));
-}
-
-function buildLocalSession(account) {
-  return {
-    username: account.username,
-    scope: account.scope,
-  };
 }
 
 async function authenticateUser({ username, password }) {
@@ -26,25 +7,7 @@ async function authenticateUser({ username, password }) {
     return authenticateUserOnline({ username, password });
   }
 
-  return authenticateUserLocal({ username, password });
-}
-
-async function authenticateUserLocal({ username, password }) {
-  const account = getLocalAccountByUsername(username);
-  const localAuthAccounts = window.BPAD_LOCAL_AUTH_ACCOUNTS || [];
-  const localAuthAccount = localAuthAccounts.find((item) => item.username === username);
-
-  if (!account || !localAuthAccount) {
-    throw new Error("Akun lokal belum dikonfigurasi.");
-  }
-
-  const passwordHash = await sha256Hex(password);
-
-  if (localAuthAccount.passwordHash !== passwordHash) {
-    throw new Error("Akun atau password tidak sesuai.");
-  }
-
-  return buildLocalSession(account);
+  throw new Error("Mode login lokal sudah dihapus. Gunakan mode online.");
 }
 
 async function authenticateUserOnline({ username, password }) {
