@@ -130,6 +130,7 @@ function buildStoredReportFromRow(row) {
     dayLabel: formatDayAndDate(row.date),
     scopeLabel: row.bidang,
     account: row.username || row.bidang,
+    petugasName: row.summaryJson?.petugasName || "",
     summary: {
       total: row.total,
       hadir: row.hadir,
@@ -291,7 +292,10 @@ async function persistDailyReportOnline(report, bidangCode) {
       tugas: report.summary.tugas,
       tubel: report.summary.tubel,
       kurang: report.summary.kurang,
-      summaryJson: report.summary,
+      summaryJson: {
+        ...report.summary,
+        petugasName: report.petugasName || "",
+      },
       absentDetails: report.absentDetails,
     },
   });

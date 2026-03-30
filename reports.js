@@ -3,6 +3,13 @@ function handleGenerateReport() {
     return;
   }
 
+  const petugasName = getSelectedPetugasName(state.activeDate);
+
+  if (!petugasName) {
+    showToast("Pilih petugas absen terlebih dahulu sebelum generate laporan.", "warn");
+    return;
+  }
+
   const report = buildDailyReport(state.activeDate);
   state.currentReport = report;
   renderReportPreview(report);
@@ -35,6 +42,7 @@ function buildDailyReport(dateKey) {
     dayLabel: formatDayAndDate(dateKey),
     scopeLabel: getScopeLabel(),
     account: state.currentUser.username,
+    petugasName: getSelectedPetugasName(dateKey),
     summary,
     absentDetails,
     generatedAt: new Date().toISOString(),
@@ -85,6 +93,7 @@ function renderReportPreview(report) {
 
       <div class="report-meta">
         <p><strong>Hari/Tanggal:</strong> ${report.dayLabel}</p>
+        <p><strong>Petugas:</strong> ${report.petugasName || "-"}</p>
       </div>
 
       <div class="report-grid report-grid-main">
@@ -133,6 +142,7 @@ function exportCurrentReportExcel() {
   const summaryRows = `
     <tr><th>Hari/Tanggal</th><td>${escapeHtml(report.dayLabel)}</td></tr>
     <tr><th>Lingkup</th><td>${escapeHtml(report.scopeLabel)}</td></tr>
+    <tr><th>Petugas</th><td>${escapeHtml(report.petugasName || "-")}</td></tr>
     <tr><th>Jumlah</th><td>${report.summary.total}</td></tr>
     <tr><th>Kurang</th><td>${report.summary.kurang}</td></tr>
     <tr><th>Hadir</th><td>${report.summary.hadir}</td></tr>
@@ -239,6 +249,7 @@ function exportCurrentReportPdf() {
       </div>
     </div>
     <p><strong>Hari/Tanggal:</strong> ${escapeHtml(report.dayLabel)}</p>
+    <p><strong>Petugas:</strong> ${escapeHtml(report.petugasName || "-")}</p>
     <p><strong>Lingkup:</strong> ${escapeHtml(report.scopeLabel)}</p>
     <p><strong>Jumlah:</strong> ${report.summary.total}</p>
     <p><strong>Hadir:</strong> ${report.summary.hadir}</p>
@@ -313,6 +324,7 @@ async function renderMonthlyRecap() {
             <article class="saved-report-item">
               <p><strong>${report.dayLabel}</strong></p>
               <p>Lingkup: ${report.scopeLabel}</p>
+              <p>Petugas: ${report.petugasName || "-"}</p>
               <p>Jumlah: ${report.summary.total} • Hadir: ${report.summary.hadir} • Kurang: ${report.summary.kurang}</p>
             </article>
           `

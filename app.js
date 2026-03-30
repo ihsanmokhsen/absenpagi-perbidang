@@ -69,6 +69,7 @@ function bindEvents() {
       showToast("Gagal menyimpan password akun.", "error");
     });
   });
+  elements.petugasSelect.addEventListener("change", handlePetugasChange);
   elements.attendanceContainer.addEventListener("click", handleAttendanceContainerClick);
 
   document.querySelectorAll("[data-close-modal]").forEach((button) => {
@@ -149,6 +150,7 @@ async function showDashboard() {
   elements.scopeInput.value = getScopeLabel();
   elements.todayLabel.textContent = `Hari ini: ${formatLongDate(state.activeDate)}`;
   elements.liveClock.textContent = `Jam: ${formatLiveTime()}`;
+  renderPetugasControl();
   await syncCurrentDateData(state.activeDate);
   updateToolbarAccess();
   renderDashboard();
@@ -270,6 +272,34 @@ function renderDashboard() {
   renderAttendanceList();
 }
 
+function renderPetugasControl() {
+  const isBidangAccount = !!state.currentUser && !isBpadAccount();
+  elements.petugasField.classList.toggle("hidden", !isBidangAccount);
+
+  if (!isBidangAccount) {
+    elements.petugasSelect.innerHTML = '<option value="">Pilih petugas absen</option>';
+    return;
+  }
+
+  const options = getPetugasOptionsForCurrentUser();
+  const selectedPetugas = getSelectedPetugasName(state.activeDate);
+
+  elements.petugasSelect.innerHTML = `
+    <option value="">Pilih petugas absen</option>
+    ${options
+      .map(
+        (name) => `
+          <option value="${name}" ${name === selectedPetugas ? "selected" : ""}>${name}</option>
+        `
+      )
+      .join("")}
+  `;
+}
+
+function handlePetugasChange(event) {
+  setSelectedPetugasName(event.target.value, state.activeDate);
+}
+
 function updateToolbarAccess() {
   const isMonitoringOnly = isBpadAccount();
   const isFrozen = isScopeFrozen(state.activeDate);
@@ -282,11 +312,13 @@ function updateToolbarAccess() {
   if (!isMonitoringOnly) {
     elements.startAttendanceBtn.disabled = isFrozen;
     elements.generateReportBtn.disabled = isFrozen;
+    elements.petugasSelect.disabled = isFrozen;
     elements.freezeNotice.classList.toggle("hidden", !isFrozen);
     elements.freezeNotice.textContent = isFrozen
       ? "Absensi hari ini sudah dibekukan karena laporan harian telah disimpan. Data tidak dapat diubah lagi. Jika diperlukan perbaikan, silakan hubungi kepegawaian."
       : "";
   } else {
+    elements.petugasSelect.disabled = true;
     elements.freezeNotice.classList.add("hidden");
     elements.freezeNotice.textContent = "";
   }

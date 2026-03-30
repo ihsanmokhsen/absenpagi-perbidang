@@ -2,6 +2,7 @@ const STORAGE_KEYS = {
   session: "bpad-attendance-session",
   attendance: "bpad-attendance-data",
   reports: "bpad-daily-reports",
+  petugas: "bpad-petugas-selection",
 };
 
 const STATUS_OPTIONS = [
@@ -50,6 +51,32 @@ const ACCOUNTS = [
     scope: ["ASET 2"],
   },
 ];
+
+const PETUGAS_BY_BIDANG = {
+  SEKRETARIAT: [
+    "Banni Bangngu Gada, SE",
+    "Aprianus Aryantho Rondak, S.STP",
+    "Eugene Cornelis, SE",
+  ],
+  "PENDAPATAN 1": [
+    "Maria Y. D. Hendrayani, S.ST",
+    "France F. G. Naibobe, S.STP., MM",
+  ],
+  "PENDAPATAN 2": [
+    "Karel Eben Umbu Kaballu, S.STP",
+    "Rolinda Inneke Foenay, S.Kom",
+  ],
+  "ASET 1": [
+    "Firminus Kapitan, S.STP",
+    "Lambertus Buda, S.Sos",
+    "Jacobus Makin, ST., M.Ec.Dev.",
+  ],
+  "ASET 2": [
+    "Natalia Th. F. Saba, S.Sos., MM",
+    "Yus Ressie, SH",
+    "Maria Indah Imakulata, S.Sos",
+  ],
+};
 
 const EMPLOYEES = {
   SEKRETARIAT: [
@@ -217,6 +244,8 @@ const elements = {
   activeAccountName: document.getElementById("activeAccountName"),
   activeDateInput: document.getElementById("activeDateInput"),
   scopeInput: document.getElementById("scopeInput"),
+  petugasField: document.getElementById("petugasField"),
+  petugasSelect: document.getElementById("petugasSelect"),
   summaryTitle: document.getElementById("summaryTitle"),
   freezeNotice: document.getElementById("freezeNotice"),
   summaryCards: document.getElementById("summaryCards"),

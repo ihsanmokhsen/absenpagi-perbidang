@@ -204,6 +204,60 @@ function getScopeKeyForBidang(bidang) {
   return bidang;
 }
 
+function getCurrentBidangCode() {
+  if (!state.currentUser || state.currentUser.scope === "ALL") {
+    return "";
+  }
+
+  return Array.isArray(state.currentUser.scope) ? state.currentUser.scope[0] : "";
+}
+
+function getPetugasOptionsForCurrentUser() {
+  const bidang = getCurrentBidangCode();
+  return PETUGAS_BY_BIDANG[bidang] || [];
+}
+
+function getPetugasSelectionKey(dateKey = state.activeDate) {
+  const bidang = getCurrentBidangCode();
+  return bidang ? `${dateKey}:${bidang}` : "";
+}
+
+function getSelectedPetugasName(dateKey = state.activeDate) {
+  const key = getPetugasSelectionKey(dateKey);
+
+  if (!key) {
+    return "";
+  }
+
+  const selections = loadFromStorage(STORAGE_KEYS.petugas, {});
+
+  if (selections[key]) {
+    return selections[key];
+  }
+
+  const bidang = getCurrentBidangCode();
+  const savedReport = bidang ? getDailyReportForBidang(dateKey, bidang) : null;
+  return savedReport?.petugasName || "";
+}
+
+function setSelectedPetugasName(name, dateKey = state.activeDate) {
+  const key = getPetugasSelectionKey(dateKey);
+
+  if (!key) {
+    return;
+  }
+
+  const selections = loadFromStorage(STORAGE_KEYS.petugas, {});
+
+  if (name) {
+    selections[key] = name;
+  } else {
+    delete selections[key];
+  }
+
+  saveToStorage(STORAGE_KEYS.petugas, selections);
+}
+
 function getAttendanceViewEmployees() {
   if (!isBpadAccount()) {
     return getVisibleEmployees();
