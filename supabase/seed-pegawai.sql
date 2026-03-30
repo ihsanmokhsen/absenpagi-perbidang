@@ -130,7 +130,6 @@ values
   ('AST2-020', 'Vega N. Mudin', 'PPPK', 'ASET 2', true)
 on conflict (employee_code) do update
 set
-  nama = excluded.nama,
   jenis = excluded.jenis,
   bidang_code = excluded.bidang_code,
   is_active = excluded.is_active,
