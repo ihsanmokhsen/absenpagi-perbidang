@@ -599,6 +599,8 @@ function initializeAttendanceForDate(dateKey) {
 
 function buildMonitoringCard(bidang, employees) {
   const hasReported = hasDailyReportForBidang(state.activeDate, bidang);
+  const report = hasReported ? getDailyReportForBidang(state.activeDate, bidang) : null;
+  const petugasName = report?.petugasName || "-";
 
   return `
     <article class="monitoring-card clickable-card" data-monitor-bidang="${bidang}">
@@ -611,6 +613,7 @@ function buildMonitoringCard(bidang, employees) {
             ${hasReported ? "Sudah Melapor" : "Belum Melapor"}
           </span>
         </strong>
+        <span class="monitoring-stat"><strong>Petugas Hari Ini:</strong> ${petugasName}</span>
         <span class="monitoring-stat">
           ${hasReported
             ? `Laporan harian bidang ${bidang} sudah disimpan.`
@@ -656,6 +659,7 @@ function buildReportedSummary() {
             return `
               <div class="reported-item clickable-card" data-monitor-bidang="${bidang}">
                 <strong>${bidang}</strong>
+                <p>Petugas: ${report?.petugasName || "-"}</p>
                 <p>Jumlah: ${report?.summary?.total || 0} • Hadir: ${report?.summary?.hadir || 0} • Kurang: ${report?.summary?.kurang || 0}</p>
               </div>
             `;
