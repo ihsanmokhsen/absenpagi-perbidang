@@ -161,6 +161,39 @@ function getEmployeeDirectory() {
   return state.employeeDirectory || EMPLOYEES;
 }
 
+function getAttendanceMode(dateKey = state.activeDate) {
+  const day = new Date(`${dateKey}T00:00:00`).getDay();
+  return day === 2 || day === 3 ? "per_bidang" : "full_badan";
+}
+
+function isPerBidangMode(dateKey = state.activeDate) {
+  return getAttendanceMode(dateKey) === "per_bidang";
+}
+
+function isFullBadanMode(dateKey = state.activeDate) {
+  return getAttendanceMode(dateKey) === "full_badan";
+}
+
+function canCurrentUserInputAttendance(dateKey = state.activeDate) {
+  if (!state.currentUser) {
+    return false;
+  }
+
+  if (isPerBidangMode(dateKey)) {
+    return !isBpadAccount();
+  }
+
+  return isBpadAccount();
+}
+
+function canCurrentUserGenerateReport(dateKey = state.activeDate) {
+  return canCurrentUserInputAttendance(dateKey);
+}
+
+function getModeLabel(dateKey = state.activeDate) {
+  return isPerBidangMode(dateKey) ? "Per Bidang" : "Full Badan";
+}
+
 function getVisibleEmployees() {
   const scope = state.currentUser?.scope;
   const employeeDirectory = getEmployeeDirectory();
@@ -185,6 +218,14 @@ function getAttendanceForDate(dateKey) {
 }
 
 function getScopeLabel() {
+  if (isFullBadanMode()) {
+    return isBpadAccount() ? "Full Badan" : "Full Badan oleh BPAD";
+  }
+
+  if (isBpadAccount()) {
+    return "Monitoring Semua Bidang";
+  }
+
   return state.currentUser?.scope === "ALL"
     ? "Semua Bidang"
     : state.currentUser.scope.join(", ");
@@ -212,14 +253,26 @@ function getCurrentBidangCode() {
   return Array.isArray(state.currentUser.scope) ? state.currentUser.scope[0] : "";
 }
 
+function getPetugasScopeCode(dateKey = state.activeDate) {
+  if (isFullBadanMode(dateKey)) {
+    return "FULL_BADAN";
+  }
+
+  return getCurrentBidangCode();
+}
+
 function getPetugasOptionsForCurrentUser() {
+  if (isFullBadanMode()) {
+    return [...new Set(Object.values(PETUGAS_BY_BIDANG).flat())];
+  }
+
   const bidang = getCurrentBidangCode();
   return PETUGAS_BY_BIDANG[bidang] || [];
 }
 
 function getPetugasSelectionKey(dateKey = state.activeDate) {
-  const bidang = getCurrentBidangCode();
-  return bidang ? `${dateKey}:${bidang}` : "";
+  const scopeCode = getPetugasScopeCode(dateKey);
+  return scopeCode ? `${dateKey}:${scopeCode}` : "";
 }
 
 function getSelectedPetugasName(dateKey = state.activeDate) {
@@ -235,8 +288,8 @@ function getSelectedPetugasName(dateKey = state.activeDate) {
     return selections[key];
   }
 
-  const bidang = getCurrentBidangCode();
-  const savedReport = bidang ? getDailyReportForBidang(dateKey, bidang) : null;
+  const reportScope = isFullBadanMode(dateKey) ? "ALL" : getCurrentBidangCode();
+  const savedReport = reportScope ? getDailyReportForBidang(dateKey, reportScope) : null;
   return savedReport?.petugasName || "";
 }
 
@@ -259,6 +312,10 @@ function setSelectedPetugasName(name, dateKey = state.activeDate) {
 }
 
 function getAttendanceViewEmployees() {
+  if (isFullBadanMode()) {
+    return canCurrentUserInputAttendance() ? getVisibleEmployees() : [];
+  }
+
   if (!isBpadAccount()) {
     return getVisibleEmployees();
   }
@@ -271,6 +328,18 @@ function getAttendanceViewEmployees() {
 }
 
 function updateAttendancePanelState() {
+  if (isFullBadanMode()) {
+    elements.attendancePanel.classList.toggle("hidden", !canCurrentUserInputAttendance());
+    elements.attendanceTitle.textContent = isBpadAccount()
+      ? "Input Absensi Full Badan"
+      : "Informasi Absensi Hari Ini";
+    elements.attendanceHint.classList.remove("hidden");
+    elements.attendanceHint.textContent = isBpadAccount()
+      ? "Mode full badan aktif. Akun BPAD mengelola absensi seluruh pegawai pada hari ini."
+      : "Hari ini menggunakan mode full badan. Input absensi dikelola oleh akun BPAD.";
+    return;
+  }
+
   if (!isBpadAccount()) {
     elements.attendancePanel.classList.remove("hidden");
     elements.attendanceTitle.textContent = "Input Absensi Per Bidang";
@@ -296,6 +365,10 @@ function updateAttendancePanelState() {
 }
 
 function getAttendanceEmptyMessage() {
+  if (isFullBadanMode() && !canCurrentUserInputAttendance()) {
+    return "Hari ini absensi menggunakan mode full badan dan dikelola oleh akun BPAD.";
+  }
+
   if (isBpadAccount() && !state.selectedMonitoringBidang) {
     return "Belum ada bidang dipilih. Klik salah satu bidang pada Monitoring BPAD atau rangkuman bidang yang sudah lapor.";
   }
@@ -316,15 +389,24 @@ function getDailyReportForBidang(dateKey, bidang) {
 }
 
 function isScopeFrozen(dateKey) {
+  const reports = loadFromStorage(STORAGE_KEYS.reports, {});
+
+  if (isFullBadanMode(dateKey)) {
+    return Boolean(reports[dateKey]?.ALL);
+  }
+
   if (!state.currentUser || state.currentUser.scope === "ALL") return false;
 
-  const reports = loadFromStorage(STORAGE_KEYS.reports, {});
   const scopeKey = getScopeKey();
   return Boolean(reports[dateKey]?.[scopeKey]);
 }
 
 function getReadonlyMessage() {
-  if (isBpadAccount()) {
+  if (!canCurrentUserInputAttendance()) {
+    if (isFullBadanMode()) {
+      return isBpadAccount() ? "" : "Mode full badan dikelola BPAD";
+    }
+
     return "Mode monitoring BPAD";
   }
 

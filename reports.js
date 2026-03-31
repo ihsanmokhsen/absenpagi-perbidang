@@ -1,5 +1,5 @@
 function handleGenerateReport() {
-  if (isBpadAccount() || isScopeFrozen(state.activeDate)) {
+  if (!canCurrentUserGenerateReport(state.activeDate) || isScopeFrozen(state.activeDate)) {
     return;
   }
 
@@ -272,12 +272,18 @@ function exportCurrentReportPdf() {
 }
 
 async function saveCurrentReport() {
-  if (!state.currentReport || isBpadAccount() || isScopeFrozen(state.activeDate)) return;
+  if (!state.currentReport || !canCurrentUserGenerateReport(state.activeDate) || isScopeFrozen(state.activeDate)) {
+    return;
+  }
 
   const scopeKey = getScopeKey();
 
   if (APP_CONFIG.dataMode === "online") {
-    const bidangCode = Array.isArray(state.currentUser.scope) ? state.currentUser.scope[0] : scopeKey;
+    const bidangCode = isFullBadanMode(state.activeDate)
+      ? "ALL"
+      : Array.isArray(state.currentUser.scope)
+        ? state.currentUser.scope[0]
+        : scopeKey;
     await persistDailyReportOnline(state.currentReport, bidangCode);
   }
 
@@ -287,14 +293,20 @@ async function saveCurrentReport() {
     reports[state.currentReport.date] = {};
   }
 
-  reports[state.currentReport.date][scopeKey] = state.currentReport;
+  const reportStorageKey = isFullBadanMode(state.activeDate) ? "ALL" : scopeKey;
+  reports[state.currentReport.date][reportStorageKey] = state.currentReport;
   saveToStorage(STORAGE_KEYS.reports, reports);
   await syncCurrentDateData(state.activeDate);
 
   closeModal("reportModal");
   updateToolbarAccess();
   renderAttendanceList();
-  showToast("Laporan harian berhasil disimpan dan absensi dibekukan.", "success");
+  showToast(
+    isFullBadanMode(state.activeDate)
+      ? "Laporan full badan berhasil disimpan dan absensi dibekukan."
+      : "Laporan harian berhasil disimpan dan absensi dibekukan.",
+    "success"
+  );
 }
 
 async function openMonthlyRecap() {

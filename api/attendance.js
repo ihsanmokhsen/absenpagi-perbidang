@@ -7,6 +7,7 @@ const {
   supabaseFetch,
 } = require("./_lib/supabase");
 const { getAuthenticatedUser } = require("./_lib/auth");
+const { isFullBadanMode, isPerBidangMode } = require("./_lib/attendance-mode");
 
 async function getAttendanceRows({ date, from, to }) {
   const query = new URLSearchParams({
@@ -114,20 +115,40 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "POST") {
-      if (user.accessScope === "ALL") {
-        return sendJson(res, 403, { message: "Akun monitoring tidak diizinkan mengubah absensi." });
+      const body = parseRequestBody(req);
+
+      if (!body?.date) {
+        return sendJson(res, 400, { message: "Tanggal absensi wajib diisi." });
       }
 
-      const body = parseRequestBody(req);
+      const perBidangMode = isPerBidangMode(body.date);
+
+      if (perBidangMode && user.accessScope === "ALL") {
+        return sendJson(res, 403, { message: "Pada hari ini akun BPAD hanya digunakan untuk monitoring per bidang." });
+      }
+
+      if (isFullBadanMode(body.date) && user.accessScope !== "ALL") {
+        return sendJson(res, 403, { message: "Hari ini menggunakan mode full badan dan absensi dikelola oleh akun BPAD." });
+      }
+
       const employeeIds =
         body.action === "bulk_upsert" ? body.employeeIds || [] : body.employeeId ? [body.employeeId] : [];
       const employees = await fetchEmployeesByCodes(employeeIds);
 
-      if (!employees.length || employees.some((employee) => employee.bidang_code !== user.bidangCode)) {
+      const violatesScope =
+        !employees.length ||
+        (user.accessScope !== "ALL" &&
+          employees.some((employee) => employee.bidang_code !== user.bidangCode));
+
+      if (violatesScope) {
         return sendJson(res, 403, { message: "Anda hanya dapat mengubah absensi pada bidang sendiri." });
       }
 
-      const lockedBidang = await getLockedBidangForDate(body.date, [user.bidangCode]);
+      const bidangCodesToCheck =
+        user.accessScope === "ALL"
+          ? ["ALL"]
+          : [user.bidangCode];
+      const lockedBidang = await getLockedBidangForDate(body.date, bidangCodesToCheck);
 
       if (lockedBidang.length) {
         return sendJson(res, 403, {

@@ -1,5 +1,6 @@
 const { findAccountId, parseRequestBody, sendJson, supabaseFetch } = require("./_lib/supabase");
 const { getAuthenticatedUser } = require("./_lib/auth");
+const { isFullBadanMode, isPerBidangMode } = require("./_lib/attendance-mode");
 
 async function getReportRows({ date, from, to }) {
   const query = new URLSearchParams({
@@ -115,18 +116,29 @@ module.exports = async (req, res) => {
       const body = parseRequestBody(req);
 
       if (body.action === "save") {
-        if (user.accessScope === "ALL") {
-          return sendJson(res, 403, { message: "Akun monitoring tidak diizinkan menyimpan laporan harian." });
+        const reportDate = body.report?.date;
+        const reportBidang = body.report?.bidang;
+
+        if (!reportDate) {
+          return sendJson(res, 400, { message: "Tanggal laporan wajib diisi." });
         }
 
-        if ((body.report || {}).bidang !== user.bidangCode) {
+        if (isPerBidangMode(reportDate) && user.accessScope === "ALL") {
+          return sendJson(res, 403, { message: "Pada hari ini akun BPAD hanya digunakan untuk monitoring per bidang." });
+        }
+
+        if (isFullBadanMode(reportDate) && user.accessScope !== "ALL") {
+          return sendJson(res, 403, { message: "Hari ini menggunakan mode full badan dan laporan dikelola oleh akun BPAD." });
+        }
+
+        if (user.accessScope !== "ALL" && reportBidang !== user.bidangCode) {
           return sendJson(res, 403, { message: "Anda hanya dapat menyimpan laporan bidang sendiri." });
         }
 
         await saveReport({
           ...(body.report || {}),
           username: user.username,
-          bidang: user.bidangCode,
+          bidang: user.accessScope === "ALL" ? "ALL" : user.bidangCode,
         });
         return sendJson(res, 200, { success: true });
       }

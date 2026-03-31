@@ -148,7 +148,7 @@ async function showDashboard() {
   elements.activeDateInput.value = formatDayAndDate(state.activeDate);
   elements.summaryTitle.textContent = `Statistik Hari Ini (${formatLongDate(state.activeDate)})`;
   elements.scopeInput.value = getScopeLabel();
-  elements.todayLabel.textContent = `Hari ini: ${formatLongDate(state.activeDate)}`;
+  elements.todayLabel.textContent = `Hari ini: ${formatLongDate(state.activeDate)} • Mode: ${getModeLabel(state.activeDate)}`;
   elements.liveClock.textContent = `Jam: ${formatLiveTime()}`;
   renderPetugasControl();
   await syncCurrentDateData(state.activeDate);
@@ -273,10 +273,10 @@ function renderDashboard() {
 }
 
 function renderPetugasControl() {
-  const isBidangAccount = !!state.currentUser && !isBpadAccount();
-  elements.petugasField.classList.toggle("hidden", !isBidangAccount);
+  const shouldShowPetugas = !!state.currentUser && canCurrentUserGenerateReport(state.activeDate);
+  elements.petugasField.classList.toggle("hidden", !shouldShowPetugas);
 
-  if (!isBidangAccount) {
+  if (!shouldShowPetugas) {
     elements.petugasSelect.innerHTML = '<option value="">Pilih petugas absen</option>';
     return;
   }
@@ -301,15 +301,17 @@ function handlePetugasChange(event) {
 }
 
 function updateToolbarAccess() {
-  const isMonitoringOnly = isBpadAccount();
+  const canInput = canCurrentUserInputAttendance(state.activeDate);
+  const canGenerate = canCurrentUserGenerateReport(state.activeDate);
   const isFrozen = isScopeFrozen(state.activeDate);
+  const isMonitoringOnly = isBpadAccount() && isPerBidangMode(state.activeDate);
 
-  elements.generateReportBtn.classList.toggle("hidden", isMonitoringOnly);
-  elements.startAttendanceBtn.classList.toggle("hidden", isMonitoringOnly);
-  elements.manageAccountsBtn.classList.toggle("hidden", !isMonitoringOnly);
+  elements.generateReportBtn.classList.toggle("hidden", !canGenerate);
+  elements.startAttendanceBtn.classList.toggle("hidden", !canInput);
+  elements.manageAccountsBtn.classList.toggle("hidden", !isBpadAccount());
   elements.monitoringPanel.classList.toggle("hidden", !isMonitoringOnly);
 
-  if (!isMonitoringOnly) {
+  if (canInput || canGenerate) {
     elements.startAttendanceBtn.disabled = isFrozen;
     elements.generateReportBtn.disabled = isFrozen;
     elements.petugasSelect.disabled = isFrozen;
@@ -319,8 +321,10 @@ function updateToolbarAccess() {
       : "";
   } else {
     elements.petugasSelect.disabled = true;
-    elements.freezeNotice.classList.add("hidden");
-    elements.freezeNotice.textContent = "";
+    elements.freezeNotice.classList.remove("hidden");
+    elements.freezeNotice.textContent = isFullBadanMode(state.activeDate)
+      ? "Hari ini absensi menggunakan mode full badan dan dikelola oleh akun BPAD."
+      : "";
   }
 }
 
@@ -338,7 +342,9 @@ function getAccountDisplayName(username) {
 }
 
 function startAttendance() {
-  if (!state.currentUser || isBpadAccount() || isScopeFrozen(state.activeDate)) return;
+  if (!state.currentUser || !canCurrentUserInputAttendance(state.activeDate) || isScopeFrozen(state.activeDate)) {
+    return;
+  }
 
   persistAttendanceBulk(
     state.activeDate,
@@ -347,7 +353,12 @@ function startAttendance() {
   );
   renderDashboard();
   elements.attendancePanel.scrollIntoView({ behavior: "smooth", block: "start" });
-  showToast("Absensi hari ini berhasil dimulai dan semua pegawai diset hadir.", "success");
+  showToast(
+    isFullBadanMode(state.activeDate)
+      ? "Absensi full badan berhasil dimulai dan semua pegawai diset hadir."
+      : "Absensi hari ini berhasil dimulai dan semua pegawai diset hadir.",
+    "success"
+  );
 }
 
 function showToast(message, type = "info") {
@@ -438,7 +449,7 @@ function getEmployeeType(employee) {
 
 function renderEmployeeSection(title, employees, dateAttendance) {
   if (!employees.length) return "";
-  const readOnly = isBpadAccount() || isScopeFrozen(state.activeDate);
+  const readOnly = !canCurrentUserInputAttendance(state.activeDate) || isScopeFrozen(state.activeDate);
 
   return `
     <div class="employee-section">
@@ -489,7 +500,7 @@ function renderEmployeeSection(title, employees, dateAttendance) {
 }
 
 function handleStatusChange(event) {
-  if (isBpadAccount() || isScopeFrozen(state.activeDate)) {
+  if (!canCurrentUserInputAttendance(state.activeDate) || isScopeFrozen(state.activeDate)) {
     return;
   }
 
@@ -545,7 +556,7 @@ function updateGroupSummaryForRow(row) {
 }
 
 function renderMonitoringInsights() {
-  if (!isBpadAccount()) {
+  if (!isBpadAccount() || !isPerBidangMode(state.activeDate)) {
     elements.monitoringCards.innerHTML = "";
     elements.reportedSummary.innerHTML = "";
     return;
