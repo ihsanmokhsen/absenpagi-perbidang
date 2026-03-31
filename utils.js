@@ -163,7 +163,7 @@ function getEmployeeDirectory() {
 
 function getAttendanceMode(dateKey = state.activeDate) {
   const day = new Date(`${dateKey}T00:00:00`).getDay();
-  return day === 2 || day === 3 ? "per_bidang" : "full_badan";
+  return day === 3 || day === 4 ? "per_bidang" : "full_badan";
 }
 
 function isPerBidangMode(dateKey = state.activeDate) {
