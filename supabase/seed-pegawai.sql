@@ -97,7 +97,7 @@ values
   ('AST1-006', 'Marcel F. Elim, ST', 'ASN', 'ASET 1', true),
   ('AST1-007', 'Sandra A. Suratama, SE., MM', 'ASN', 'ASET 1', true),
   ('AST1-008', 'Alfret D. I. Tunliu, S.Kom', 'ASN', 'ASET 1', true),
-  ('AST1-009', 'Andreas A. Sabi, S.STP', 'ASN', 'ASET 1', true),
+  ('PD1-024', 'Andreas A. Sabi, S.STP', 'ASN', 'PENDAPATAN 1', true),
   ('AST1-010', 'Florinda da Costa Soares', 'ASN', 'ASET 1', true),
   ('AST1-011', 'Nadya Centini H. Koso, S.Tr.Ak', 'ASN', 'ASET 1', true),
   ('AST1-012', 'Patrisiana N. Kire Herin, S.Tr.Ak', 'ASN', 'ASET 1', true),
