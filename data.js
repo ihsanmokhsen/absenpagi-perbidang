@@ -257,6 +257,7 @@ const elements = {
   attendanceHint: document.getElementById("attendanceHint"),
   attendanceContainer: document.getElementById("attendanceContainer"),
   startAttendanceBtn: document.getElementById("startAttendanceBtn"),
+  bpadDailyRecapBtn: document.getElementById("bpadDailyRecapBtn"),
   manageAccountsBtn: document.getElementById("manageAccountsBtn"),
   logoutBtn: document.getElementById("logoutBtn"),
   generateReportBtn: document.getElementById("generateReportBtn"),

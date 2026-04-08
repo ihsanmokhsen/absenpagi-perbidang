@@ -41,6 +41,7 @@ function bindEvents() {
   });
   elements.startAttendanceBtn.addEventListener("click", startAttendance);
   elements.generateReportBtn.addEventListener("click", handleGenerateReport);
+  elements.bpadDailyRecapBtn.addEventListener("click", handleBpadDailyRecap);
   elements.exportReportExcelBtn.addEventListener("click", exportCurrentReportExcel);
   elements.exportReportPdfBtn.addEventListener("click", exportCurrentReportPdf);
   elements.saveReportBtn.addEventListener("click", () => {
@@ -308,6 +309,7 @@ function updateToolbarAccess() {
 
   elements.generateReportBtn.classList.toggle("hidden", !canGenerate);
   elements.startAttendanceBtn.classList.toggle("hidden", !canInput);
+  elements.bpadDailyRecapBtn.classList.toggle("hidden", !isMonitoringOnly);
   elements.manageAccountsBtn.classList.toggle("hidden", !isBpadAccount());
   elements.monitoringPanel.classList.toggle("hidden", !isMonitoringOnly);
 

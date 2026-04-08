@@ -10,14 +10,29 @@ function handleGenerateReport() {
     return;
   }
 
-  const report = buildDailyReport(state.activeDate);
+  const report = buildDailyReport(state.activeDate, { allowSave: true });
   state.currentReport = report;
   renderReportPreview(report);
   openModal("reportModal");
 }
 
-function buildDailyReport(dateKey) {
-  const visibleEmployees = getVisibleEmployees();
+function handleBpadDailyRecap() {
+  if (!isBpadAccount() || !isPerBidangMode(state.activeDate)) {
+    return;
+  }
+
+  const report = buildDailyReport(state.activeDate, {
+    scopeLabel: "Rekap Semua Bidang",
+    petugasName: "-",
+    allowSave: false,
+  });
+  state.currentReport = report;
+  renderReportPreview(report);
+  openModal("reportModal");
+}
+
+function buildDailyReport(dateKey, options = {}) {
+  const visibleEmployees = options.employees || getVisibleEmployees();
   const summary = calculateSummary(dateKey, visibleEmployees);
   const grouped = groupEmployeesByBidang(visibleEmployees);
   const dateAttendance = getAttendanceForDate(dateKey);
@@ -40,9 +55,10 @@ function buildDailyReport(dateKey) {
   return {
     date: dateKey,
     dayLabel: formatDayAndDate(dateKey),
-    scopeLabel: getScopeLabel(),
+    scopeLabel: options.scopeLabel || getScopeLabel(),
     account: state.currentUser.username,
-    petugasName: getSelectedPetugasName(dateKey),
+    petugasName: options.petugasName ?? getSelectedPetugasName(dateKey),
+    allowSave: options.allowSave ?? true,
     summary,
     absentDetails,
     generatedAt: new Date().toISOString(),
@@ -50,6 +66,8 @@ function buildDailyReport(dateKey) {
 }
 
 function renderReportPreview(report) {
+  elements.saveReportBtn.classList.toggle("hidden", report.allowSave === false);
+
   const absentSections = report.absentDetails
     .map(({ bidang, notPresent }) => {
       if (!notPresent.length) {
@@ -272,7 +290,12 @@ function exportCurrentReportPdf() {
 }
 
 async function saveCurrentReport() {
-  if (!state.currentReport || !canCurrentUserGenerateReport(state.activeDate) || isScopeFrozen(state.activeDate)) {
+  if (
+    !state.currentReport ||
+    state.currentReport.allowSave === false ||
+    !canCurrentUserGenerateReport(state.activeDate) ||
+    isScopeFrozen(state.activeDate)
+  ) {
     return;
   }
 
