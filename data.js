@@ -248,6 +248,7 @@ const elements = {
   petugasSelect: document.getElementById("petugasSelect"),
   summaryTitle: document.getElementById("summaryTitle"),
   freezeNotice: document.getElementById("freezeNotice"),
+  dailyInstructionNotice: document.getElementById("dailyInstructionNotice"),
   summaryCards: document.getElementById("summaryCards"),
   monitoringPanel: document.getElementById("monitoringPanel"),
   monitoringCards: document.getElementById("monitoringCards"),

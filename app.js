@@ -312,6 +312,10 @@ function updateToolbarAccess() {
   elements.bpadDailyRecapBtn.classList.toggle("hidden", !isMonitoringOnly);
   elements.manageAccountsBtn.classList.toggle("hidden", !isBpadAccount());
   elements.monitoringPanel.classList.toggle("hidden", !isMonitoringOnly);
+  elements.dailyInstructionNotice.classList.toggle("hidden", !isPerBidangMode(state.activeDate));
+  elements.dailyInstructionNotice.textContent = isPerBidangMode(state.activeDate)
+    ? "Setiap bidang wajib generate dan simpan laporan harian agar data absensi tersimpan di kepegawaian."
+    : "";
 
   if (canInput || canGenerate) {
     elements.startAttendanceBtn.disabled = isFrozen;
