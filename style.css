@@ -1415,6 +1415,52 @@ tbody tr:hover {
   margin-top: 6px;
 }
 
+.late-ranking-list {
+  display: grid;
+  gap: 10px;
+}
+
+.late-ranking-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid #e5edf5;
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+}
+
+.late-ranking-order {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.late-ranking-body strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.late-ranking-body p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.late-ranking-count {
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 @media (max-width: 900px) {
   .topbar,
   .group-header,
@@ -1441,6 +1487,14 @@ tbody tr:hover {
   .modal-actions {
     justify-content: stretch;
     flex-direction: column;
+  }
+
+  .late-ranking-item {
+    grid-template-columns: auto 1fr;
+  }
+
+  .late-ranking-count {
+    grid-column: 1 / -1;
   }
 
   .modal-actions .btn {

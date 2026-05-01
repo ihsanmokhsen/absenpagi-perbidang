@@ -345,6 +345,7 @@ async function renderMonthlyRecap() {
   const recapRows = employees.map((employee) => buildEmployeeMonthlyRecap(employee, monthKey));
   const savedReports = getSavedReportsForMonth(monthKey);
   const groupedRecap = groupRowsByBidang(recapRows);
+  const topLateRows = getTopLateEmployees(recapRows);
 
   const recapHtml = recapRows.length
     ? Object.entries(groupedRecap)
@@ -367,8 +368,35 @@ async function renderMonthlyRecap() {
         .join("")
     : `<div class="table-empty">Belum ada laporan harian tersimpan pada bulan ini.</div>`;
 
+  const topLateHtml = topLateRows.length
+    ? `
+        <div class="late-ranking-list">
+          ${topLateRows
+            .map(
+              (row, index) => `
+                <article class="late-ranking-item">
+                  <div class="late-ranking-order">#${index + 1}</div>
+                  <div class="late-ranking-body">
+                    <strong>${getEmployeeDisplayName(row)}</strong>
+                    <p>${row.bidang}</p>
+                  </div>
+                  <div class="late-ranking-count">${row.terlambat}x terlambat</div>
+                </article>
+              `
+            )
+            .join("")}
+        </div>
+      `
+    : `<div class="table-empty">Belum ada data keterlambatan pada bulan ini.</div>`;
+
   elements.monthlyContent.innerHTML = `
     <div class="monthly-layout">
+      <section class="section-card">
+        <h4>Pegawai Paling Sering Terlambat</h4>
+        <p class="section-note">Diurutkan berdasarkan jumlah keterlambatan terbanyak pada bulan ${formatMonthLabel(monthKey)}.</p>
+        ${topLateHtml}
+      </section>
+
       <section class="section-card">
         <h4>Tabel Rekap Pegawai Bulan ${formatMonthLabel(monthKey)}</h4>
         <p class="section-note">Rekap dihitung otomatis dari data absensi harian yang tersimpan.</p>
@@ -390,6 +418,7 @@ function exportMonthlyRecapExcel() {
   );
   const savedReports = getSavedReportsForMonth(monthKey);
   const groupedRecap = groupRowsByBidang(recapRows);
+  const topLateRows = getTopLateEmployees(recapRows);
 
   const recapSections = Object.entries(groupedRecap)
     .map(
@@ -456,6 +485,21 @@ function exportMonthlyRecapExcel() {
         .join("")
     : `<tr><td colspan="5">Belum ada laporan harian tersimpan.</td></tr>`;
 
+  const topLateTableRows = topLateRows.length
+    ? topLateRows
+        .map(
+          (row, index) => `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${escapeHtml(getEmployeeDisplayName(row))}</td>
+              <td>${escapeHtml(row.bidang)}</td>
+              <td>${row.terlambat}</td>
+            </tr>
+          `
+        )
+        .join("")
+    : `<tr><td colspan="4">Belum ada data keterlambatan pada bulan ini.</td></tr>`;
+
   const html = `
     <html>
       <head>
@@ -465,6 +509,20 @@ function exportMonthlyRecapExcel() {
         <h2>Rekap Bulanan Absensi Apel Pagi BPAD Provinsi NTT</h2>
         <p>Bulan: ${escapeHtml(formatMonthLabel(monthKey))}</p>
         <p>Lingkup: ${escapeHtml(getScopeLabel())}</p>
+        <table border="1">
+          <thead>
+            <tr>
+              <th>Peringkat</th>
+              <th>Nama</th>
+              <th>Bidang</th>
+              <th>Jumlah Terlambat</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${topLateTableRows}
+          </tbody>
+        </table>
+        <br />
         ${recapSections}
         <table border="1">
           <thead>
@@ -497,6 +555,7 @@ function exportMonthlyRecapPdf() {
   );
   const savedReports = getSavedReportsForMonth(monthKey);
   const groupedRecap = groupRowsByBidang(recapRows);
+  const topLateRows = getTopLateEmployees(recapRows);
 
   const reportItems = savedReports.length
     ? `<ul>${savedReports
@@ -553,10 +612,41 @@ function exportMonthlyRecapPdf() {
     )
     .join("");
 
+  const topLateSection = topLateRows.length
+    ? `
+        <table>
+          <thead>
+            <tr>
+              <th>Peringkat</th>
+              <th>Nama</th>
+              <th>Bidang</th>
+              <th>Jumlah Terlambat</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${topLateRows
+              .map(
+                (row, index) => `
+                  <tr>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(getEmployeeDisplayName(row))}</td>
+                    <td>${escapeHtml(row.bidang)}</td>
+                    <td>${row.terlambat}</td>
+                  </tr>
+                `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      `
+    : "<p>Belum ada data keterlambatan pada bulan ini.</p>";
+
   openPrintWindow(`
     <h1>Rekap Bulanan Absensi Apel Pagi BPAD Provinsi NTT</h1>
     <p><strong>Bulan:</strong> ${escapeHtml(formatMonthLabel(monthKey))}</p>
     <p><strong>Lingkup:</strong> ${escapeHtml(getScopeLabel())}</p>
+    <h2>Pegawai Paling Sering Terlambat</h2>
+    ${topLateSection}
     ${recapSections}
     <h2>Daftar Rekap Harian Tersimpan</h2>
     ${reportItems}
@@ -686,6 +776,23 @@ function buildEmployeeMonthlyRecap(employee, monthKey) {
   });
 
   return row;
+}
+
+function getTopLateEmployees(rows, limit = 5) {
+  return rows
+    .filter((row) => row.terlambat > 0)
+    .sort((a, b) => {
+      if (b.terlambat !== a.terlambat) {
+        return b.terlambat - a.terlambat;
+      }
+
+      if (b.totalTidakHadir !== a.totalTidakHadir) {
+        return b.totalTidakHadir - a.totalTidakHadir;
+      }
+
+      return getEmployeeDisplayName(a).localeCompare(getEmployeeDisplayName(b), "id");
+    })
+    .slice(0, limit);
 }
 
 function getSavedReportsForMonth(monthKey) {
