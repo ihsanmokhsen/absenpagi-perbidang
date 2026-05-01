@@ -309,7 +309,7 @@ function updateToolbarAccess() {
 
   elements.generateReportBtn.classList.toggle("hidden", !canGenerate);
   elements.startAttendanceBtn.classList.toggle("hidden", !canInput);
-  elements.bpadDailyRecapBtn.classList.toggle("hidden", !isMonitoringOnly);
+  elements.bpadDailyRecapBtn.classList.toggle("hidden", !isBpadAccount());
   elements.manageAccountsBtn.classList.toggle("hidden", !isBpadAccount());
   elements.monitoringPanel.classList.toggle("hidden", !isMonitoringOnly);
   elements.dailyInstructionNotice.classList.toggle("hidden", !isPerBidangMode(state.activeDate));

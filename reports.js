@@ -17,12 +17,12 @@ function handleGenerateReport() {
 }
 
 function handleBpadDailyRecap() {
-  if (!isBpadAccount() || !isPerBidangMode(state.activeDate)) {
+  if (!isBpadAccount()) {
     return;
   }
 
   const report = buildDailyReport(state.activeDate, {
-    scopeLabel: "Rekap Semua Bidang",
+    scopeLabel: isFullBadanMode(state.activeDate) ? "Rekap Full Badan" : "Rekap Semua Bidang",
     petugasName: "-",
     allowSave: false,
   });
