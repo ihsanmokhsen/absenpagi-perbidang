@@ -1,5 +1,11 @@
 function handleGenerateReport() {
-  if (!canCurrentUserGenerateReport(state.activeDate) || isScopeFrozen(state.activeDate)) {
+  if (!canCurrentUserGenerateReport(state.activeDate)) {
+    showToast(getGenerateReportBlockedMessage(), "warn");
+    return;
+  }
+
+  if (isScopeFrozen(state.activeDate)) {
+    showToast(getSavedTodayMessage("generate"), "warn");
     return;
   }
 
@@ -14,6 +20,7 @@ function handleGenerateReport() {
   state.currentReport = report;
   renderReportPreview(report);
   openModal("reportModal");
+  showToast("Preview laporan sudah siap. Silakan periksa lalu simpan data absensi hari ini.", "info");
 }
 
 function handleBpadDailyRecap() {
@@ -29,6 +36,22 @@ function handleBpadDailyRecap() {
   state.currentReport = report;
   renderReportPreview(report);
   openModal("reportModal");
+}
+
+function getGenerateReportBlockedMessage() {
+  if (isFullBadanMode(state.activeDate)) {
+    return isBpadAccount()
+      ? "Generate laporan full badan hanya tersedia untuk akun BPAD."
+      : "Hari ini absensi dikelola penuh oleh akun BPAD.";
+  }
+
+  return "Hari ini laporan hanya dapat digenerate oleh akun bidang masing-masing.";
+}
+
+function getSavedTodayMessage(action = "save") {
+  return action === "generate"
+    ? "Data absensi sudah tersimpan untuk hari ini. Generate ulang tidak diperlukan."
+    : "Data absensi sudah tersimpan untuk hari ini. Simpan ulang tidak dapat dilakukan.";
 }
 
 function buildDailyReport(dateKey, options = {}) {
@@ -290,12 +313,23 @@ function exportCurrentReportPdf() {
 }
 
 async function saveCurrentReport() {
-  if (
-    !state.currentReport ||
-    state.currentReport.allowSave === false ||
-    !canCurrentUserGenerateReport(state.activeDate) ||
-    isScopeFrozen(state.activeDate)
-  ) {
+  if (!state.currentReport) {
+    showToast("Generate laporan terlebih dahulu sebelum menyimpan data hari ini.", "warn");
+    return;
+  }
+
+  if (state.currentReport.allowSave === false) {
+    showToast("Rekap ini hanya untuk dilihat atau diexport, bukan untuk disimpan sebagai laporan.", "warn");
+    return;
+  }
+
+  if (!canCurrentUserGenerateReport(state.activeDate)) {
+    showToast(getGenerateReportBlockedMessage(), "warn");
+    return;
+  }
+
+  if (isScopeFrozen(state.activeDate)) {
+    showToast(getSavedTodayMessage("save"), "warn");
     return;
   }
 
@@ -326,8 +360,8 @@ async function saveCurrentReport() {
   renderAttendanceList();
   showToast(
     isFullBadanMode(state.activeDate)
-      ? "Laporan full badan berhasil disimpan dan absensi dibekukan."
-      : "Laporan harian berhasil disimpan dan absensi dibekukan.",
+      ? "Data absensi full badan sudah tersimpan untuk hari ini dan langsung dibekukan."
+      : "Data absensi hari ini sudah tersimpan dan langsung dibekukan.",
     "success"
   );
 }
