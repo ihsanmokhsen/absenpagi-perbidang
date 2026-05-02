@@ -4,6 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Absensi Apel Pagi BPAD Provinsi NTT</title>
+    <meta
+      name="description"
+      content="Aplikasi internal Absensi Apel Pagi BPAD Provinsi NTT untuk input absensi harian, laporan bidang, monitoring BPAD, dan rekap bulanan."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Absensi Apel Pagi BPAD Provinsi NTT" />
+    <meta property="og:title" content="Absensi Apel Pagi BPAD Provinsi NTT" />
+    <meta
+      property="og:description"
+      content="Aplikasi internal untuk input absensi apel pagi, laporan harian per bidang, monitoring BPAD, dan rekap bulanan."
+    />
+    <meta property="og:url" content="https://absenpagi-perbidang.vercel.app/" />
+    <meta property="og:image" content="https://absenpagi-perbidang.vercel.app/logobaru.png" />
+    <meta property="og:image:alt" content="Logo aplikasi Absensi Apel Pagi BPAD Provinsi NTT" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Absensi Apel Pagi BPAD Provinsi NTT" />
+    <meta
+      name="twitter:description"
+      content="Aplikasi internal untuk input absensi apel pagi, laporan harian per bidang, monitoring BPAD, dan rekap bulanan."
+    />
+    <meta name="twitter:image" content="https://absenpagi-perbidang.vercel.app/logobaru.png" />
     <link rel="icon" type="image/png" href="logobaru.png" />
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -120,10 +141,10 @@
               <button id="generateReportBtn" class="btn btn-primary">
                 Generate Laporan Harian
               </button>
-              <button id="bpadDailyRecapBtn" class="btn btn-secondary hidden">
+              <button id="bpadDailyRecapBtn" class="btn btn-recap hidden">
                 Rekap Harian BPAD
               </button>
-              <button id="openMonthlyBtn" class="btn btn-secondary">
+              <button id="openMonthlyBtn" class="btn btn-monthly">
                 Lihat Rekap Bulanan
               </button>
             </div>
@@ -183,8 +204,8 @@
           </div>
           <div class="modal-actions">
             <button id="saveReportBtn" class="btn btn-primary">Simpan Laporan</button>
-            <button id="exportReportExcelBtn" class="btn btn-secondary">Export Excel</button>
-            <button id="exportReportPdfBtn" class="btn btn-outline">Export PDF</button>
+            <button id="exportReportExcelBtn" class="btn btn-excel">Export Excel</button>
+            <button id="exportReportPdfBtn" class="btn btn-pdf">Export PDF</button>
             <button class="icon-btn" data-close-modal="reportModal" aria-label="Tutup">
               ×
             </button>
@@ -216,9 +237,9 @@
             <span>Pilih Bulan</span>
             <input id="monthPicker" type="month" />
           </label>
-          <button id="refreshMonthlyBtn" class="btn btn-secondary">Tampilkan</button>
-          <button id="exportMonthlyExcelBtn" class="btn btn-secondary">Export Excel</button>
-          <button id="exportMonthlyPdfBtn" class="btn btn-outline">Export PDF</button>
+          <button id="refreshMonthlyBtn" class="btn btn-filter">Tampilkan</button>
+          <button id="exportMonthlyExcelBtn" class="btn btn-excel">Export Excel</button>
+          <button id="exportMonthlyPdfBtn" class="btn btn-pdf">Export PDF</button>
         </div>
 
         <div id="monthlyContent" class="modal-content"></div>
