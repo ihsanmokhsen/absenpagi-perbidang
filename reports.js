@@ -378,6 +378,7 @@ async function renderMonthlyRecap() {
   const employees = getVisibleEmployees();
   const recapRows = employees.map((employee) => buildEmployeeMonthlyRecap(employee, monthKey));
   const savedReports = getSavedReportsForMonth(monthKey);
+  const savedReportTracking = buildSavedReportTracking(savedReports);
   const groupedRecap = groupRowsByBidang(recapRows);
   const topLateRows = getTopLateEmployees(recapRows);
 
@@ -387,15 +388,34 @@ async function renderMonthlyRecap() {
         .join("")
     : `<div class="table-empty">Belum ada data pegawai untuk ditampilkan.</div>`;
 
-  const reportHtml = savedReports.length
-    ? savedReports
+  const reportHtml = savedReportTracking.length
+    ? savedReportTracking
         .map(
-          (report) => `
-            <article class="saved-report-item">
-              <p><strong>${report.dayLabel}</strong></p>
-              <p>Lingkup: ${report.scopeLabel}</p>
-              <p>Petugas: ${report.petugasName || "-"}</p>
-              <p>Jumlah: ${report.summary.total} • Hadir: ${report.summary.hadir} • Kurang: ${report.summary.kurang}</p>
+          (entry) => `
+            <article class="saved-report-item saved-report-tracker">
+              <div class="saved-report-top">
+                <div>
+                  <p class="saved-report-date"><strong>${entry.dayLabel}</strong></p>
+                  <p class="saved-report-meta-line">Laporan tersimpan: ${entry.reportCount}</p>
+                </div>
+                <span class="tag">${entry.scopeLabel}</span>
+              </div>
+              <div class="saved-report-stats">
+                <div class="saved-report-stat">
+                  <span>Total Pegawai</span>
+                  <strong>${entry.total}</strong>
+                </div>
+                <div class="saved-report-stat saved-report-stat-success">
+                  <span>Hadir</span>
+                  <strong>${entry.hadir}</strong>
+                </div>
+                <div class="saved-report-stat saved-report-stat-alert">
+                  <span>Tidak Hadir</span>
+                  <strong>${entry.kurang}</strong>
+                </div>
+              </div>
+              <p class="saved-report-meta-line">Petugas: ${entry.petugasNames.join(", ") || "-"}</p>
+              <p class="saved-report-meta-line">Lingkup tersimpan: ${entry.scopeNames.join(", ")}</p>
             </article>
           `
         )
@@ -439,6 +459,7 @@ async function renderMonthlyRecap() {
 
       <section class="section-card">
         <h4>Daftar Rekap Harian Tersimpan</h4>
+        <p class="section-note">Tracking per hari untuk melihat total pegawai, jumlah hadir, dan jumlah tidak hadir dari laporan yang sudah disimpan.</p>
         <div class="saved-report-list">${reportHtml}</div>
       </section>
     </div>
@@ -848,4 +869,47 @@ function getSavedReportsForMonth(monthKey) {
   });
 
   return result.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function buildSavedReportTracking(savedReports) {
+  const grouped = savedReports.reduce((accumulator, report) => {
+    const key = report.date;
+
+    if (!accumulator[key]) {
+      accumulator[key] = {
+        date: report.date,
+        dayLabel: report.dayLabel,
+        total: 0,
+        hadir: 0,
+        kurang: 0,
+        reportCount: 0,
+        petugasNames: new Set(),
+        scopeNames: new Set(),
+      };
+    }
+
+    accumulator[key].total += report.summary.total || 0;
+    accumulator[key].hadir += report.summary.hadir || 0;
+    accumulator[key].kurang += report.summary.kurang || 0;
+    accumulator[key].reportCount += 1;
+
+    if (report.petugasName) {
+      accumulator[key].petugasNames.add(report.petugasName);
+    }
+
+    if (report.scopeLabel) {
+      accumulator[key].scopeNames.add(report.scopeLabel);
+    }
+
+    return accumulator;
+  }, {});
+
+  return Object.values(grouped)
+    .map((entry) => ({
+      ...entry,
+      petugasNames: [...entry.petugasNames],
+      scopeNames: [...entry.scopeNames],
+      scopeLabel: entry.scopeNames.length > 1 ? "Gabungan Bidang" : entry.scopeNames[0] || "-",
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
