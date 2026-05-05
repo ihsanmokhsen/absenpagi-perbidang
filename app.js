@@ -270,6 +270,7 @@ function resetManageAccountsForm() {
 function renderDashboard() {
   renderSummary();
   renderMonitoringInsights();
+  renderDailySavedReports();
   renderAttendanceList();
 }
 
@@ -312,6 +313,7 @@ function updateToolbarAccess() {
   elements.bpadDailyRecapBtn.classList.toggle("hidden", !isBpadAccount());
   elements.manageAccountsBtn.classList.toggle("hidden", !isBpadAccount());
   elements.monitoringPanel.classList.toggle("hidden", !isMonitoringOnly);
+  elements.dailySavedPanel.classList.toggle("hidden", !isBpadAccount());
   elements.dailyInstructionNotice.classList.toggle("hidden", !isPerBidangMode(state.activeDate));
   elements.dailyInstructionNotice.textContent = isPerBidangMode(state.activeDate)
     ? "Setiap bidang wajib generate dan simpan laporan harian agar data absensi tersimpan di kepegawaian."
@@ -594,6 +596,79 @@ function renderMonitoringInsights() {
   });
 }
 
+function renderDailySavedReports() {
+  if (!isBpadAccount()) {
+    elements.dailySavedContent.innerHTML = "";
+    return;
+  }
+
+  const savedReports = getSavedReportsForDate(state.activeDate);
+
+  if (!savedReports.length) {
+    elements.dailySavedContent.innerHTML = `
+      <div class="table-empty">Belum ada laporan harian yang tersimpan pada ${formatLongDate(state.activeDate)}.</div>
+    `;
+    return;
+  }
+
+  elements.dailySavedContent.innerHTML = savedReports
+    .map(
+      ({ scopeKey, report }) => `
+        <article class="saved-report-item saved-report-tracker">
+          <div class="saved-report-top">
+            <div>
+              <p class="saved-report-date"><strong>${report.dayLabel}</strong></p>
+              <p class="saved-report-meta-line">Lingkup: ${report.scopeLabel}</p>
+            </div>
+            <span class="tag">${scopeKey === "ALL" ? "Full Badan" : scopeKey}</span>
+          </div>
+          <div class="saved-report-stats">
+            <div class="saved-report-stat">
+              <span>Total Pegawai</span>
+              <strong>${report.summary.total || 0}</strong>
+            </div>
+            <div class="saved-report-stat saved-report-stat-success">
+              <span>Hadir</span>
+              <strong>${report.summary.hadir || 0}</strong>
+            </div>
+            <div class="saved-report-stat saved-report-stat-alert">
+              <span>Tidak Hadir</span>
+              <strong>${report.summary.kurang || 0}</strong>
+            </div>
+          </div>
+          <p class="saved-report-meta-line">Petugas: ${report.petugasName || "-"}</p>
+          <div class="saved-report-actions">
+            <button type="button" class="inline-action inline-action-update" data-update-report-scope="${scopeKey}">
+              Update
+            </button>
+            <button type="button" class="inline-action" data-delete-report-scope="${scopeKey}">
+              Hapus
+            </button>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+
+  elements.dailySavedContent.querySelectorAll("[data-update-report-scope]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      handleUpdateSavedReport(event).catch((error) => {
+        console.error(error);
+        showToast("Gagal membuka laporan untuk diperbarui.", "error");
+      });
+    });
+  });
+
+  elements.dailySavedContent.querySelectorAll("[data-delete-report-scope]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      handleDeleteSavedReport(event).catch((error) => {
+        console.error(error);
+        showToast("Gagal menghapus laporan harian.", "error");
+      });
+    });
+  });
+}
+
 function initializeAttendanceForDate(dateKey) {
   const attendance = loadFromStorage(STORAGE_KEYS.attendance, {});
   const dateData = attendance[dateKey] || {};
@@ -708,4 +783,49 @@ async function handleReopenReport(event) {
 
 async function reopenBidangReport(dateKey, bidang) {
   await reopenDailyReport(dateKey, bidang);
+}
+
+async function handleUpdateSavedReport(event) {
+  event.stopPropagation();
+
+  const scopeKey = event.currentTarget.dataset.updateReportScope;
+  const label = scopeKey === "ALL" ? "full badan" : scopeKey;
+  const shouldReopen = window.confirm(
+    `Buka ulang laporan ${label} untuk ${formatLongDate(state.activeDate)}? Setelah itu data bisa diperbarui dan digenerate ulang.`
+  );
+
+  if (!shouldReopen) return;
+
+  await reopenBidangReport(state.activeDate, scopeKey);
+  state.selectedMonitoringBidang = scopeKey === "ALL" ? null : scopeKey;
+  await syncCurrentDateData(state.activeDate);
+  renderDashboard();
+
+  if (scopeKey === "ALL") {
+    elements.attendancePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  } else {
+    elements.attendancePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  showToast(`Laporan ${label} dibuka ulang. Silakan perbarui absensi lalu simpan kembali.`, "warn");
+}
+
+async function handleDeleteSavedReport(event) {
+  event.stopPropagation();
+
+  const scopeKey = event.currentTarget.dataset.deleteReportScope;
+  const label = scopeKey === "ALL" ? "full badan" : scopeKey;
+  const shouldDelete = window.confirm(
+    `Hapus laporan ${label} untuk ${formatLongDate(state.activeDate)}? Data laporan akan hilang dari daftar harian.`
+  );
+
+  if (!shouldDelete) return;
+
+  await reopenBidangReport(state.activeDate, scopeKey);
+  if (state.selectedMonitoringBidang === scopeKey) {
+    state.selectedMonitoringBidang = null;
+  }
+  await syncCurrentDateData(state.activeDate);
+  renderDashboard();
+  showToast(`Laporan ${label} dihapus dari daftar harian.`, "warn");
 }

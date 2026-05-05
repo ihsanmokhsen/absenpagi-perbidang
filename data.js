@@ -253,6 +253,8 @@ const elements = {
   monitoringPanel: document.getElementById("monitoringPanel"),
   monitoringCards: document.getElementById("monitoringCards"),
   reportedSummary: document.getElementById("reportedSummary"),
+  dailySavedPanel: document.getElementById("dailySavedPanel"),
+  dailySavedContent: document.getElementById("dailySavedContent"),
   attendancePanel: document.getElementById("attendancePanel"),
   attendanceTitle: document.getElementById("attendanceTitle"),
   attendanceHint: document.getElementById("attendanceHint"),

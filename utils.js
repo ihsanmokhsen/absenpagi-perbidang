@@ -388,6 +388,32 @@ function getDailyReportForBidang(dateKey, bidang) {
   return reports[dateKey]?.[scopeKey] || null;
 }
 
+function getSavedReportsForDate(dateKey) {
+  const reports = loadFromStorage(STORAGE_KEYS.reports, {});
+  const reportScopes = reports[dateKey] || {};
+  const scopeKey = getScopeKey();
+
+  if (scopeKey === "ALL") {
+    return Object.entries(reportScopes)
+      .map(([savedScopeKey, report]) => ({
+        scopeKey: savedScopeKey,
+        report,
+      }))
+      .sort((a, b) => a.scopeKey.localeCompare(b.scopeKey, "id"));
+  }
+
+  if (!reportScopes[scopeKey]) {
+    return [];
+  }
+
+  return [
+    {
+      scopeKey,
+      report: reportScopes[scopeKey],
+    },
+  ];
+}
+
 function isScopeFrozen(dateKey) {
   const reports = loadFromStorage(STORAGE_KEYS.reports, {});
 
