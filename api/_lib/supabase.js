@@ -168,12 +168,21 @@ function parseRequestBody(req) {
   return req.body;
 }
 
+function parseRequestQuery(req) {
+  const requestUrl = req?.url || "/";
+  const host = req?.headers?.host || "localhost";
+  const url = new URL(requestUrl, `http://${host}`);
+
+  return Object.fromEntries(url.searchParams.entries());
+}
+
 module.exports = {
   createPasswordHash,
   fetchEmployeesByCodes,
   fetchEmployeesByIds,
   findAccountId,
   parseRequestBody,
+  parseRequestQuery,
   sendJson,
   sha256,
   supabaseFetch,

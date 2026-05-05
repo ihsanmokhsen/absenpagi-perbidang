@@ -3,6 +3,7 @@ const {
   fetchEmployeesByIds,
   findAccountId,
   parseRequestBody,
+  parseRequestQuery,
   sendJson,
   supabaseFetch,
 } = require("./_lib/supabase");
@@ -99,7 +100,7 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "GET") {
-      const { date, from, to } = req.query || {};
+      const { date, from, to } = parseRequestQuery(req);
 
       if (!date && !(from && to)) {
         return sendJson(res, 400, { message: "Parameter date atau from/to wajib diisi." });

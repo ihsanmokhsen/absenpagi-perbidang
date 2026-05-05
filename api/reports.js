@@ -1,4 +1,4 @@
-const { findAccountId, parseRequestBody, sendJson, supabaseFetch } = require("./_lib/supabase");
+const { findAccountId, parseRequestBody, parseRequestQuery, sendJson, supabaseFetch } = require("./_lib/supabase");
 const { getAuthenticatedUser } = require("./_lib/auth");
 const { isFullBadanMode, isPerBidangMode } = require("./_lib/attendance-mode");
 
@@ -97,7 +97,7 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === "GET") {
-      const { date, from, to } = req.query || {};
+      const { date, from, to } = parseRequestQuery(req);
 
       if (!date && !(from && to)) {
         return sendJson(res, 400, { message: "Parameter date atau from/to wajib diisi." });
